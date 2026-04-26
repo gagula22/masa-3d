@@ -1,0 +1,2947 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מסע התלת־ממד · קורס פיתוח 3D מקיף</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://gagula22.github.io">
+  <link rel="dns-prefetch" href="https://gagula22.github.io">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Assistant:wght@300;400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #1f2942;
+      --bg-soft: #28324d;
+      --bg-card: #2f3a58;
+      --text: #f4f1ea;
+      --text-dim: #a39e95;
+      --text-faint: #5a564f;
+      --accent: #e8a87c;
+      --accent-bright: #f4c592;
+      --accent-deep: #b8794f;
+      --line: rgba(244, 241, 234, 0.08);
+      --line-strong: rgba(244, 241, 234, 0.16);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Assistant', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      direction: rtl;
+    }
+
+    /* Three.js canvas */
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Atmospheric overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at top right, rgba(232, 168, 124, 0.06), transparent 50%),
+        radial-gradient(ellipse at bottom left, rgba(232, 168, 124, 0.04), transparent 50%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Grain texture */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 2;
+      mix-blend-mode: overlay;
+    }
+
+    main, nav, footer {
+      position: relative;
+      z-index: 3;
+    }
+
+    /* Navigation */
+    nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      left: 0;
+      padding: 1.5rem 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      transition: all 0.4s ease;
+      backdrop-filter: blur(0px);
+    }
+
+    nav.scrolled {
+      background: rgba(31, 41, 66, 0.85);
+      backdrop-filter: blur(20px);
+      padding: 1rem 3rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .logo {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 900;
+      font-size: 1.4rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .logo-mark {
+      width: 28px;
+      height: 28px;
+      border: 1.5px solid var(--accent);
+      transform: rotate(45deg);
+      position: relative;
+    }
+
+    .logo-mark::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1.5px solid var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2.5rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: color 0.3s;
+      position: relative;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      right: 0;
+      width: 0;
+      height: 1px;
+      background: var(--accent);
+      transition: width 0.3s;
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .nav-cta {
+      padding: 0.6rem 1.4rem;
+      background: var(--accent);
+      color: var(--bg);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.9rem;
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    .nav-cta:hover {
+      background: var(--accent-bright);
+      transform: translateY(-1px);
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8rem 3rem 4rem;
+      position: relative;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 1s ease forwards 0.2s;
+    }
+
+    .hero-eyebrow::before {
+      content: '';
+      width: 40px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .hero-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 900;
+      font-size: clamp(3rem, 9vw, 8rem);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin-bottom: 2rem;
+      max-width: 1200px;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: fadeUp 1.2s ease forwards 0.4s;
+    }
+
+    .hero-title .accent {
+      color: var(--accent);
+      font-style: italic;
+      font-family: 'Frank Ruhl Libre', serif;
+    }
+
+    .hero-title .line-2 {
+      display: block;
+      padding-right: 2em;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+      color: var(--text-dim);
+      max-width: 640px;
+      margin-bottom: 3rem;
+      font-weight: 300;
+      line-height: 1.6;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 1s ease forwards 0.7s;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      gap: 1.2rem;
+      align-items: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 1s ease forwards 0.9s;
+    }
+
+    .btn-primary {
+      padding: 1.1rem 2.4rem;
+      background: var(--accent);
+      color: var(--bg);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1rem;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-bright);
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
+
+    .btn-primary:hover::before {
+      transform: translateX(0);
+    }
+
+    .btn-primary span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-secondary {
+      padding: 1.1rem 2rem;
+      background: transparent;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1rem;
+      border: 1px solid var(--line-strong);
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .play-icon {
+      width: 24px;
+      height: 24px;
+      border: 1px solid currentColor;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+    }
+
+    /* Hero stats */
+    .hero-stats {
+      position: absolute;
+      bottom: 4rem;
+      left: 3rem;
+      display: flex;
+      gap: 4rem;
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 1.2s;
+    }
+
+    .hero-stat {
+      direction: rtl;
+    }
+
+    .hero-stat-num {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .hero-stat-label {
+      font-size: 0.85rem;
+      color: var(--text-faint);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute;
+      bottom: 4rem;
+      right: 3rem;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 0.8rem;
+      color: var(--text-faint);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards 1.5s;
+    }
+
+    .scroll-hint::after {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      margin-top: 1rem;
+      margin-right: 50%;
+      animation: scrollLine 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollLine {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.3); }
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* SECTION GENERAL */
+    section {
+      padding: 8rem 3rem;
+      position: relative;
+    }
+
+    .section-header {
+      max-width: 1300px;
+      margin: 0 auto 5rem;
+    }
+
+    .section-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-eyebrow::before {
+      content: '';
+      width: 30px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    .section-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 900;
+      font-size: clamp(2.4rem, 5vw, 4.5rem);
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+      max-width: 900px;
+    }
+
+    .section-title .accent {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .section-lead {
+      font-size: 1.15rem;
+      color: var(--text-dim);
+      max-width: 600px;
+      font-weight: 300;
+    }
+
+    /* WHAT YOU'LL LEARN */
+    .learn {
+      background: linear-gradient(180deg, transparent, rgba(20, 17, 15, 0.4), transparent);
+    }
+
+    .learn-grid {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      border-top: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+    }
+
+    .learn-card {
+      padding: 2.5rem 2rem;
+      border-bottom: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+      transition: all 0.4s ease;
+      position: relative;
+      cursor: default;
+    }
+
+    .learn-card:hover {
+      background: rgba(232, 168, 124, 0.03);
+    }
+
+    .learn-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transition: width 0.4s ease;
+    }
+
+    .learn-card:hover::before {
+      width: 100%;
+    }
+
+    .learn-num {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+
+    .learn-icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+    }
+
+    .learn-card h3 {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.8rem;
+      letter-spacing: -0.01em;
+    }
+
+    .learn-card p {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    /* CURRICULUM */
+    .curriculum-list {
+      max-width: 1100px;
+      margin: 0 auto;
+      border-top: 1px solid var(--line);
+    }
+
+    .module {
+      border-bottom: 1px solid var(--line);
+      transition: background 0.3s;
+    }
+
+    .module:hover {
+      background: rgba(232, 168, 124, 0.02);
+    }
+
+    .module-header {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 2rem;
+      align-items: center;
+      padding: 2.2rem 1rem;
+      cursor: pointer;
+      transition: padding 0.3s;
+    }
+
+    .module.active .module-header {
+      padding-bottom: 1rem;
+    }
+
+    .module-num {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1rem;
+      color: var(--accent);
+      font-weight: 500;
+      min-width: 40px;
+    }
+
+    .module-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .module-meta {
+      color: var(--text-faint);
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+    }
+
+    .module-toggle {
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .module-toggle::before,
+    .module-toggle::after {
+      content: '';
+      position: absolute;
+      background: var(--text);
+      transition: all 0.3s;
+    }
+
+    .module-toggle::before {
+      width: 12px;
+      height: 1px;
+    }
+
+    .module-toggle::after {
+      width: 1px;
+      height: 12px;
+    }
+
+    .module.active .module-toggle {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .module.active .module-toggle::before {
+      background: var(--bg);
+    }
+
+    .module.active .module-toggle::after {
+      transform: scaleY(0);
+    }
+
+    .module-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease;
+    }
+
+    .module.active .module-content {
+      max-height: 800px;
+    }
+
+    .lesson-list {
+      list-style: none;
+      padding: 0 4rem 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem 3rem;
+    }
+
+    .lesson-list li {
+      padding: 0.8rem 0;
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .lesson-list li::before {
+      content: '';
+      width: 4px;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* INSTRUCTOR */
+    .instructor {
+      padding: 8rem 3rem;
+    }
+
+    .instructor-wrap {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 5rem;
+      align-items: center;
+    }
+
+    .instructor-visual {
+      position: relative;
+      aspect-ratio: 4/5;
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+
+    .instructor-visual::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(232, 168, 124, 0.1) 0%, transparent 60%),
+        radial-gradient(circle at 30% 70%, rgba(232, 168, 124, 0.15), transparent 50%);
+    }
+
+    .instructor-visual::after {
+      content: '01';
+      position: absolute;
+      top: 2rem;
+      left: 2rem;
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+    }
+
+    .instructor-portrait {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .instructor-portrait svg {
+      width: 60%;
+      height: 60%;
+      opacity: 0.85;
+    }
+
+    .instructor-frame {
+      position: absolute;
+      inset: 1rem;
+      border: 1px solid var(--line-strong);
+      pointer-events: none;
+    }
+
+    .instructor-name-tag {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    .instructor-name-tag strong {
+      color: var(--text);
+      display: block;
+      font-size: 1.1rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .instructor-text .section-title {
+      margin-bottom: 2rem;
+    }
+
+    .instructor-bio {
+      color: var(--text-dim);
+      font-size: 1.1rem;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+    }
+
+    .instructor-credentials {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .credential-num {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.4rem;
+    }
+
+    .credential-label {
+      font-size: 0.85rem;
+      color: var(--text-faint);
+      letter-spacing: 0.05em;
+    }
+
+    /* TESTIMONIALS */
+    .testimonials {
+      padding: 8rem 3rem;
+      background: var(--bg-soft);
+    }
+
+    .testimonials-grid {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+
+    .testimonial {
+      padding: 2.5rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      position: relative;
+      transition: all 0.4s ease;
+    }
+
+    .testimonial:hover {
+      transform: translateY(-4px);
+      border-color: var(--line-strong);
+    }
+
+    .testimonial-quote {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 4rem;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 1rem;
+      font-weight: 900;
+      opacity: 0.6;
+    }
+
+    .testimonial-text {
+      color: var(--text);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    .testimonial-author {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .author-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 700;
+      color: var(--bg);
+      font-size: 1.1rem;
+    }
+
+    .author-name {
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.95rem;
+      margin-bottom: 0.1rem;
+    }
+
+    .author-role {
+      color: var(--text-faint);
+      font-size: 0.85rem;
+    }
+
+    /* PRICING */
+    .pricing-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .pricing-card {
+      padding: 3rem;
+      border: 1px solid var(--line-strong);
+      background: var(--bg-soft);
+      position: relative;
+      transition: all 0.4s ease;
+    }
+
+    .pricing-card.featured {
+      background: linear-gradient(180deg, rgba(232, 168, 124, 0.05), var(--bg-soft));
+      border-color: var(--accent);
+    }
+
+    .pricing-badge {
+      position: absolute;
+      top: -1px;
+      right: 2rem;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 0.4rem 1.2rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .pricing-name {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .pricing-tagline {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+
+    .pricing-price {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .price-amount {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 4rem;
+      font-weight: 900;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .price-currency {
+      font-size: 1.5rem;
+      color: var(--text-dim);
+    }
+
+    .price-note {
+      color: var(--text-faint);
+      font-size: 0.85rem;
+      margin-right: auto;
+    }
+
+    .pricing-features {
+      list-style: none;
+      margin-bottom: 2.5rem;
+    }
+
+    .pricing-features li {
+      padding: 0.7rem 0;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      font-size: 0.95rem;
+    }
+
+    .check {
+      width: 18px;
+      height: 18px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: var(--accent);
+      font-size: 0.7rem;
+    }
+
+    .pricing-cta {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      text-align: center;
+      background: transparent;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid var(--line-strong);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .pricing-card.featured .pricing-cta {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    .pricing-cta:hover {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .pricing-card.featured .pricing-cta:hover {
+      background: var(--accent-bright);
+      border-color: var(--accent-bright);
+    }
+
+    /* FAQ */
+    .faq-list {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .faq-question {
+      width: 100%;
+      padding: 1.8rem 0;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: 'Heebo', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 500;
+      text-align: right;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      direction: rtl;
+      transition: color 0.3s;
+    }
+
+    .faq-question:hover {
+      color: var(--accent);
+    }
+
+    .faq-toggle {
+      width: 24px;
+      height: 24px;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .faq-toggle::before,
+    .faq-toggle::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 50%;
+      background: currentColor;
+      transition: transform 0.3s;
+    }
+
+    .faq-toggle::before {
+      width: 14px;
+      height: 1px;
+      transform: translate(50%, -50%);
+    }
+
+    .faq-toggle::after {
+      width: 1px;
+      height: 14px;
+      transform: translate(50%, -50%);
+    }
+
+    .faq-item.active .faq-toggle::after {
+      transform: translate(50%, -50%) scaleY(0);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+      color: var(--text-dim);
+      line-height: 1.8;
+    }
+
+    .faq-item.active .faq-answer {
+      max-height: 200px;
+    }
+
+    .faq-answer-inner {
+      padding: 0 0 1.8rem;
+      max-width: 700px;
+    }
+
+    /* FINAL CTA */
+    .final-cta {
+      padding: 10rem 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .final-cta::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(232, 168, 124, 0.08), transparent 60%);
+    }
+
+    .final-cta-content {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .final-cta h2 {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+    }
+
+    .final-cta h2 .accent {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .final-cta p {
+      font-size: 1.2rem;
+      color: var(--text-dim);
+      margin-bottom: 3rem;
+      max-width: 600px;
+      margin-right: auto;
+      margin-left: auto;
+    }
+
+    /* FOOTER */
+    footer {
+      padding: 4rem 3rem 2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .footer-content {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer-brand p {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      margin-top: 1rem;
+      max-width: 300px;
+    }
+
+    .footer-col h4 {
+      font-size: 0.85rem;
+      color: var(--text-faint);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col li {
+      margin-bottom: 0.8rem;
+    }
+
+    .footer-col a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+    }
+
+    .footer-col a:hover {
+      color: var(--accent);
+    }
+
+    .footer-bottom {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding-top: 2rem;
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-faint);
+      font-size: 0.85rem;
+    }
+
+    /* Reveal animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* === Background Switcher Panel === */
+    .bg-switcher {
+      position: fixed;
+      right: 1.2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      background: rgba(31, 41, 66, 0.7);
+      backdrop-filter: blur(14px);
+      padding: 0.9rem 0.6rem;
+      border: 1px solid var(--line-strong);
+      border-radius: 2px;
+    }
+
+    .bg-switcher-label {
+      font-size: 0.6rem;
+      color: var(--text-faint);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      text-align: center;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+
+    .bg-btn {
+      width: 38px;
+      height: 38px;
+      background: transparent;
+      border: 1px solid var(--line-strong);
+      color: var(--text-dim);
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .bg-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .bg-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--bg);
+    }
+
+    .bg-btn-tooltip {
+      position: absolute;
+      right: calc(100% + 14px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--bg-card);
+      color: var(--text);
+      padding: 0.5rem 0.95rem;
+      border: 1px solid var(--line-strong);
+      font-size: 0.85rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+      font-family: 'Assistant', sans-serif;
+      font-weight: 500;
+      transform: translateY(-50%) translateX(8px);
+    }
+
+    .bg-btn:hover .bg-btn-tooltip {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    .bg-current-name {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      background: rgba(31, 41, 66, 0.85);
+      backdrop-filter: blur(14px);
+      padding: 0.7rem 1.6rem;
+      border: 1px solid var(--accent);
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+
+    .bg-current-name.visible {
+      opacity: 1;
+    }
+
+    /* === Notebook Overlay === */
+    .nav-link-special {
+      color: var(--accent) !important;
+      display: inline-flex !important;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-link-special::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      flex-shrink: 0;
+      animation: pulseDot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .notebook-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+    }
+
+    .notebook-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .notebook-iframe {
+      width: 100%;
+      height: 100vh;
+      border: none;
+      display: block;
+      background: #FAF6F0;
+    }
+
+    .notebook-close {
+      position: fixed;
+      top: 3rem;
+      left: 56%;
+      transform: translateX(-50%);
+      z-index: 201;
+      padding: 0.7rem 1.6rem;
+      background: rgba(31, 41, 66, 0.92);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      font-family: 'Assistant', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      backdrop-filter: blur(12px);
+      border-radius: 999px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .notebook-close:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: 0 6px 30px rgba(232, 168, 124, 0.3);
+    }
+
+    .notebook-close .back-arrow {
+      transition: transform 0.3s;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .notebook-close:hover .back-arrow {
+      transform: translateX(4px);
+    }
+
+    .notebook-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--accent);
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      font-weight: 600;
+    }
+
+    .notebook-loading.hidden {
+      opacity: 0;
+    }
+
+    .notebook-loading::after {
+      content: '';
+      display: block;
+      width: 60px;
+      height: 1px;
+      background: var(--accent);
+      margin: 1rem auto 0;
+      animation: loadingLine 1.5s ease-in-out infinite;
+    }
+
+    @keyframes loadingLine {
+      0%, 100% { transform: scaleX(0.3); opacity: 0.4; }
+      50% { transform: scaleX(1); opacity: 1; }
+    }
+
+    /* MOBILE */
+    @media (max-width: 1024px) {
+      .learn-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .instructor-wrap {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+      }
+
+      .pricing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        padding: 1rem 1.5rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .hero, section {
+        padding: 6rem 1.5rem;
+      }
+
+      .hero-stats {
+        position: static;
+        margin-top: 4rem;
+        gap: 2rem;
+      }
+
+      .scroll-hint {
+        display: none;
+      }
+
+      .learn-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .module-header {
+        grid-template-columns: auto 1fr auto;
+        gap: 1rem;
+        padding: 1.5rem 0.5rem;
+      }
+
+      .module-meta {
+        display: none;
+      }
+
+      .lesson-list {
+        grid-template-columns: 1fr;
+        padding: 0 1rem 1.5rem;
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+      }
+
+      .footer-bottom {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .hero-title .line-2 {
+        padding-right: 1em;
+      }
+
+      .instructor-credentials {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .bg-switcher {
+        right: 0.5rem;
+        padding: 0.5rem 0.3rem;
+      }
+
+      .bg-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+      }
+
+      .bg-btn-tooltip {
+        display: none;
+      }
+
+      .bg-switcher-label {
+        font-size: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav id="nav">
+  <div class="logo">
+    <span class="logo-mark"></span>
+    מסע התלת־ממד
+  </div>
+  <ul class="nav-links">
+    <li><a href="#learn">מה תלמדו</a></li>
+    <li><a href="#curriculum">תוכן הקורס</a></li>
+    <li><a href="#instructor">המרצה</a></li>
+    <li><a href="#pricing">מחיר</a></li>
+    <li><a href="#faq">שאלות</a></li>
+    <li><a href="#notebook" class="nav-link-special open-notebook">מחברת שלי</a></li>
+  </ul>
+  <a href="#pricing" class="nav-cta">להרשמה</a>
+</nav>
+
+<aside class="bg-switcher">
+  <div class="bg-switcher-label">רקע</div>
+  <button class="bg-btn active" data-scene="0">1<span class="bg-btn-tooltip">זוהר הקטבים</span></button>
+  <button class="bg-btn" data-scene="1">2<span class="bg-btn-tooltip">משטח גלים</span></button>
+  <button class="bg-btn" data-scene="2">3<span class="bg-btn-tooltip">רשת קוסמית</span></button>
+  <button class="bg-btn" data-scene="3">4<span class="bg-btn-tooltip">ערפילית</span></button>
+  <button class="bg-btn" data-scene="4">5<span class="bg-btn-tooltip">צורה מתפתחת</span></button>
+  <button class="bg-btn" data-scene="5">6<span class="bg-btn-tooltip">מתכת נוזלית</span></button>
+  <button class="bg-btn" data-scene="6">7<span class="bg-btn-tooltip">פיסות קריסטל</span></button>
+  <button class="bg-btn" data-scene="7">8<span class="bg-btn-tooltip">מנהרת מהירות</span></button>
+  <button class="bg-btn" data-scene="8">9<span class="bg-btn-tooltip">מערבולת</span></button>
+  <button class="bg-btn" data-scene="9">10<span class="bg-btn-tooltip">רשת סינת׳וויב</span></button>
+</aside>
+
+<div class="bg-current-name" id="bg-current-name"></div>
+
+<main>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">קורס דיגיטלי · 2026</div>
+    <h1 class="hero-title">
+      אל תלמדו WebGL.
+      <span class="line-2">תלמדו ליצור <span class="accent">עולמות.</span></span>
+    </h1>
+    <p class="hero-subtitle">
+      המסע המקיף ביותר בעברית ללימוד פיתוח חוויות תלת־ממד באינטרנט.
+      מהיסודות של Three.js ועד שייידרים מתקדמים ב־GLSL — הכל בעברית, מאפס למקצוען.
+    </p>
+    <div class="hero-cta-group">
+      <a href="#pricing" class="btn-primary">
+        <span>התחילו את המסע ←</span>
+      </a>
+      <a href="#" class="btn-secondary">
+        <span class="play-icon">▶</span>
+        צפו בטריילר
+      </a>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-num">94<span style="color:var(--accent)">+</span></div>
+        <div class="hero-stat-label">שעות וידאו</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">47</div>
+        <div class="hero-stat-label">פרקים מעמיקים</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">12K<span style="color:var(--accent)">+</span></div>
+        <div class="hero-stat-label">תלמידים</div>
+      </div>
+    </div>
+
+    <div class="scroll-hint">SCROLL גללו למטה</div>
+  </section>
+
+  <!-- WHAT YOU'LL LEARN -->
+  <section class="learn" id="learn">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">מה תלמדו</div>
+      <h2 class="section-title">
+        כל מה שצריך לבנות אתרים<br>
+        <span class="accent">שאחרים רק חולמים עליהם.</span>
+      </h2>
+      <p class="section-lead">
+        שמונה תחומי ידע מרכזיים שהופכים אתכם ממפתחי web רגילים ליוצרי חוויות אינטראקטיביות מהשורה הראשונה.
+      </p>
+    </div>
+
+    <div class="learn-grid reveal">
+      <div class="learn-card">
+        <div class="learn-num">01</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M24 4 L42 14 L42 34 L24 44 L6 34 L6 14 Z"/>
+          <path d="M24 4 L24 24 L42 14 M24 24 L6 14 M24 24 L24 44"/>
+        </svg>
+        <h3>שליטה מלאה ב־Three.js</h3>
+        <p>מהבסיס ועד המתקדם — סצנות, מצלמות, רנדור, גיאומטריות וחומרים. תבינו לעומק איך הכל עובד.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">02</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="24" cy="24" r="18"/>
+          <path d="M6 24 Q24 8 42 24 Q24 40 6 24"/>
+          <circle cx="24" cy="24" r="3" fill="currentColor"/>
+        </svg>
+        <h3>שייידרים ב־GLSL</h3>
+        <p>הקסם שמאחורי הקלעים. שייידר vertex ו־fragment — ותכתבו אפקטים ויזואליים מהממים מאפס.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">03</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 36 Q16 20 24 28 Q32 36 40 12"/>
+          <circle cx="8" cy="36" r="2" fill="currentColor"/>
+          <circle cx="40" cy="12" r="2" fill="currentColor"/>
+        </svg>
+        <h3>אנימציות מורכבות</h3>
+        <p>GSAP, אנימציות מבוססות גלילה, מעברים חלקים בין סצנות, ותזמון מדויק שמרגיש קולנועי.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">04</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="8" y="14" width="32" height="20" rx="2"/>
+          <path d="M8 22 L40 22 M16 14 L16 6 M32 14 L32 6"/>
+          <circle cx="24" cy="28" r="2" fill="currentColor"/>
+        </svg>
+        <h3>אינטראקציה ופיזיקה</h3>
+        <p>Raycasting, ניהול עכבר ומגע, סימולציות פיזיקליות עם Cannon.js וחוויות שמגיבות לכל פעולה.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">05</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M24 8 L24 40 M8 24 L40 24"/>
+          <circle cx="24" cy="24" r="14"/>
+          <path d="M24 8 Q40 24 24 40 Q8 24 24 8"/>
+        </svg>
+        <h3>תאורה וצללים</h3>
+        <p>תאורה ריאליסטית, צללים דינמיים, environment maps וטריקים מקצועיים שיוצרים אווירה.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">06</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 24 L24 12 L36 24 L24 36 Z"/>
+          <path d="M12 24 L36 24 M24 12 L24 36"/>
+          <circle cx="24" cy="24" r="3"/>
+        </svg>
+        <h3>אופטימיזציה לביצועים</h3>
+        <p>איך שומרים על 60fps גם בסצנות מורכבות. LOD, instancing, draw calls — והכל בעברית פשוטה.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">07</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="8" y="8" width="32" height="32" rx="2"/>
+          <path d="M16 16 L32 16 M16 24 L28 24 M16 32 L24 32"/>
+        </svg>
+        <h3>UI/UX לחוויות 3D</h3>
+        <p>איך מתכננים ממשק שלא נלחם עם התלת־ממד. עקרונות, דפוסים וטעויות נפוצות שצריך להימנע מהן.</p>
+      </div>
+
+      <div class="learn-card">
+        <div class="learn-num">08</div>
+        <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 24 L24 8 L40 24 L24 40 Z"/>
+          <path d="M14 24 L24 14 L34 24 L24 34 Z"/>
+          <path d="M20 24 L24 20 L28 24 L24 28 Z" fill="currentColor"/>
+        </svg>
+        <h3>פריסה לפרודקשן</h3>
+        <p>Vite, Webpack, hosting, דחיסת assets, lazy loading. תקבלו אתר תלת־ממד אמיתי באוויר.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CURRICULUM -->
+  <section class="curriculum" id="curriculum">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">תוכן הקורס</div>
+      <h2 class="section-title">
+        47 פרקים. <span class="accent">8 מודולים.</span><br>
+        מסע של מאסטרי.
+      </h2>
+      <p class="section-lead">
+        הקורס בנוי כמסע הדרגתי — כל פרק מתבסס על הקודם, וכולם מובילים לפרויקטים אמיתיים שתוכלו לשים בפורטפוליו.
+      </p>
+    </div>
+
+    <div class="curriculum-list reveal">
+      <div class="module active">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">01</span>
+          <span class="module-title">יסודות Three.js</span>
+          <span class="module-meta">6 פרקים · 8.2 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>מבוא — מה זה WebGL ולמה אנחנו צריכים את Three.js</li>
+            <li>הקמת סביבת פיתוח עם Vite</li>
+            <li>הסצנה הראשונה: cube, camera, renderer</li>
+            <li>טרנספורמציות: position, rotation, scale</li>
+            <li>animation loop וזמן אנימציה מדויק</li>
+            <li>Resize, full screen ו־responsive</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">02</span>
+          <span class="module-title">גיאומטריות וחומרים</span>
+          <span class="module-meta">7 פרקים · 11.5 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>גיאומטריות מובנות: cube, sphere, torus knot</li>
+            <li>גיאומטריות מותאמות אישית עם BufferGeometry</li>
+            <li>חומרים בסיסיים: Basic, Lambert, Phong</li>
+            <li>חומרים מתקדמים: Standard, Physical (PBR)</li>
+            <li>טקסטורות: בסיס, mipmaps, filtering</li>
+            <li>UV mapping והגדרת קואורדינטות</li>
+            <li>טעינת מודלים מ־Blender (GLTF)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">03</span>
+          <span class="module-title">תאורה וצללים</span>
+          <span class="module-meta">5 פרקים · 7.8 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>סוגי תאורה: ambient, directional, point, spot</li>
+            <li>הגדרת צללים: shadowMap ואופטימיזציה</li>
+            <li>Environment maps ו־HDRI</li>
+            <li>Baking — צבייה מראש של תאורה</li>
+            <li>טריקים מקצועיים לתאורה דרמטית</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">04</span>
+          <span class="module-title">אנימציות ואינטראקציה</span>
+          <span class="module-meta">6 פרקים · 9.4 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>GSAP integration עם Three.js</li>
+            <li>Raycasting — מהי קרן וכיצד לזהות הקלקות</li>
+            <li>OrbitControls וחלופות מתקדמות</li>
+            <li>אנימציות גלילה (scroll-based)</li>
+            <li>תזמון מורכב ו־timeline</li>
+            <li>אינטראקציות מגע למובייל</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">05</span>
+          <span class="module-title">שייידרים ב־GLSL</span>
+          <span class="module-meta">8 פרקים · 14.6 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>הבסיס: vertex shader ו־fragment shader</li>
+            <li>uniforms, varyings ו־attributes</li>
+            <li>הראשון שלכם: שייידר צבע מותאם</li>
+            <li>פרלין נויז וטקסטורות פרוצדורליות</li>
+            <li>אפקטים: גלים, אש, מים</li>
+            <li>חלקיקים מתקדמים</li>
+            <li>Post-processing ו־effect composer</li>
+            <li>אופטימיזציה של שייידרים</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">06</span>
+          <span class="module-title">פיזיקה וסימולציה</span>
+          <span class="module-meta">4 פרקים · 6.8 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>Cannon.js — מבוא לפיזיקה ב־3D</li>
+            <li>גופים נוקשים והתנגשויות</li>
+            <li>חיבור פיזיקה לסצנת Three.js</li>
+            <li>אופטימיזציה של חישובים</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">07</span>
+          <span class="module-title">אופטימיזציה לפרודקשן</span>
+          <span class="module-meta">5 פרקים · 7.2 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>פרופיילינג — איך מודדים ביצועים</li>
+            <li>Draw calls ו־batching</li>
+            <li>Instancing למיליוני אובייקטים</li>
+            <li>LOD — רמות פירוט דינמיות</li>
+            <li>Lazy loading ו־code splitting</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="module">
+        <div class="module-header" onclick="toggleModule(this)">
+          <span class="module-num">08</span>
+          <span class="module-title">פרויקטים מעשיים</span>
+          <span class="module-meta">6 פרקים · 22.5 שעות</span>
+          <span class="module-toggle"></span>
+        </div>
+        <div class="module-content">
+          <ul class="lesson-list">
+            <li>פרויקט 1: דף נחיתה אינטראקטיבי למוצר</li>
+            <li>פרויקט 2: גלריית עבודות תלת־ממדית</li>
+            <li>פרויקט 3: משחק browser פשוט</li>
+            <li>פריסה ל־Netlify / Vercel</li>
+            <li>SEO לאתרים תלת־ממדיים</li>
+            <li>analytics ומעקב ביצועים</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- INSTRUCTOR -->
+  <section class="instructor" id="instructor">
+    <div class="instructor-wrap">
+      <div class="instructor-visual reveal">
+        <div class="instructor-portrait">
+          <svg viewBox="0 0 100 100" fill="none" stroke="var(--accent)" stroke-width="0.5">
+            <circle cx="50" cy="38" r="14"/>
+            <path d="M 22 88 Q 50 56 78 88"/>
+            <circle cx="50" cy="50" r="40" stroke-dasharray="2 4" opacity="0.3"/>
+            <circle cx="50" cy="50" r="48" stroke-dasharray="1 3" opacity="0.2"/>
+          </svg>
+        </div>
+        <div class="instructor-frame"></div>
+        <div class="instructor-name-tag">
+          <strong>אלון רוזן</strong>
+          מפתח 3D · יוצר חוויות
+        </div>
+      </div>
+
+      <div class="instructor-text reveal">
+        <div class="section-eyebrow">המרצה</div>
+        <h2 class="section-title">
+          12 שנים של<br>
+          <span class="accent">בנייה. שבירה. למידה.</span>
+        </h2>
+        <p class="instructor-bio">
+          אלון רוזן הוא מפתח Frontend ו־Creative Developer עצמאי שעבד עם חברות כמו Wix, Monday, ועם סוכנויות בינלאומיות מובילות.
+          האתרים שבנה זכו ב־Awwwards, FWA ו־CSS Design Awards. בקורס הזה הוא לוקח אתכם איתו אחורה — לכל הטעויות, התובנות והקיצורים שהוא היה רוצה שיגידו לו לפני 12 שנים.
+        </p>
+        <div class="instructor-credentials">
+          <div>
+            <div class="credential-num">9</div>
+            <div class="credential-label">פרסי Awwwards</div>
+          </div>
+          <div>
+            <div class="credential-num">40+</div>
+            <div class="credential-label">פרויקטים מובילים</div>
+          </div>
+          <div>
+            <div class="credential-num">12</div>
+            <div class="credential-label">שנות ניסיון</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">מה אומרים תלמידים</div>
+      <h2 class="section-title">
+        12,000 תלמידים.<br>
+        <span class="accent">דירוג של 4.9.</span>
+      </h2>
+    </div>
+
+    <div class="testimonials-grid reveal">
+      <div class="testimonial">
+        <div class="testimonial-quote">"</div>
+        <p class="testimonial-text">
+          הקורס הכי טוב שלקחתי בקריירה שלי. אחרי 6 שנים בפיתוח web רגיל, סוף־סוף הבנתי איך לבנות חוויות שמרגישות אחרת לגמרי.
+          ההסברים בעברית הופכים נושאים מסובכים לפשוטים.
+        </p>
+        <div class="testimonial-author">
+          <div class="author-avatar">ד</div>
+          <div>
+            <div class="author-name">דניאל שמש</div>
+            <div class="author-role">Senior Frontend, Tel Aviv</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-quote">"</div>
+        <p class="testimonial-text">
+          ניסיתי ללמוד Three.js לבד שנתיים — בלי הצלחה. הקורס הזה לקח אותי מאפס לבניית פרויקט שלם בפורטפוליו תוך חודשיים.
+          השווה כל שקל. ויותר.
+        </p>
+        <div class="testimonial-author">
+          <div class="author-avatar">מ</div>
+          <div>
+            <div class="author-name">מיכל ברגר</div>
+            <div class="author-role">Creative Developer Freelancer</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="testimonial">
+        <div class="testimonial-quote">"</div>
+        <p class="testimonial-text">
+          המודול של השייידרים בלבד שווה את המחיר. אלון מצליח להפוך GLSL — שזה נושא מפחיד לרוב המפתחים — למשהו אינטואיטיבי.
+          אני בונה היום אפקטים שלא חלמתי שאצליח לעשות.
+        </p>
+        <div class="testimonial-author">
+          <div class="author-avatar">י</div>
+          <div>
+            <div class="author-name">יואב מזרחי</div>
+            <div class="author-role">Tech Lead, סטארטאפ Fintech</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">השקעה</div>
+      <h2 class="section-title">
+        תשלום אחד.<br>
+        <span class="accent">גישה לכל החיים.</span>
+      </h2>
+      <p class="section-lead">
+        בלי מנויים. בלי תשלומים חוזרים. גישה מלאה לכל התוכן, כולל עדכונים עתידיים — לתמיד.
+      </p>
+    </div>
+
+    <div class="pricing-grid reveal">
+      <div class="pricing-card">
+        <div class="pricing-name">סטנדרט</div>
+        <p class="pricing-tagline">לתלמיד עצמאי שרוצה לעבור את הקורס בקצב שלו.</p>
+        <div class="pricing-price">
+          <span class="price-amount">990</span>
+          <span class="price-currency">₪</span>
+          <span class="price-note">חד־פעמי</span>
+        </div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> 94+ שעות וידאו באיכות 4K</li>
+          <li><span class="check">✓</span> קוד מקור מלא לכל הפרקים</li>
+          <li><span class="check">✓</span> תרגילים ופתרונות</li>
+          <li><span class="check">✓</span> גישה לכל החיים</li>
+          <li><span class="check">✓</span> עדכוני תוכן חינם</li>
+        </ul>
+        <a href="#" class="pricing-cta">הצטרפו עכשיו</a>
+      </div>
+
+      <div class="pricing-card featured">
+        <div class="pricing-badge">הכי פופולרי</div>
+        <div class="pricing-name">פרימיום</div>
+        <p class="pricing-tagline">חוויית לימוד מלאה עם תמיכה אישית וקהילה פעילה.</p>
+        <div class="pricing-price">
+          <span class="price-amount">1,490</span>
+          <span class="price-currency">₪</span>
+          <span class="price-note">חד־פעמי</span>
+        </div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span> כל מה שיש בסטנדרט</li>
+          <li><span class="check">✓</span> גישה לקהילת Discord פרטית</li>
+          <li><span class="check">✓</span> Code review אישי על פרויקטים</li>
+          <li><span class="check">✓</span> 2 שיחות זום אישיות עם המרצה</li>
+          <li><span class="check">✓</span> תעודת סיום מקצועית</li>
+          <li><span class="check">✓</span> סדנאות חיות חודשיות</li>
+        </ul>
+        <a href="#" class="pricing-cta">קבלו גישה פרימיום</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="section-header reveal">
+      <div class="section-eyebrow">שאלות נפוצות</div>
+      <h2 class="section-title">
+        יש לכם שאלה?<br>
+        <span class="accent">כנראה שגם לאחרים.</span>
+      </h2>
+    </div>
+
+    <div class="faq-list reveal">
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>מה אני צריך לדעת לפני שאני מתחיל את הקורס?</span>
+          <span class="faq-toggle"></span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            הקורס מניח ידע בסיסי ב־HTML, CSS ו־JavaScript. אין צורך בידע קודם ב־Three.js, WebGL, או מתמטיקה תלת־ממדית — נתחיל מאפס. אם אתם מרגישים בנוח לכתוב פונקציה ב־JavaScript ולהבין מה זה אובייקט — אתם מוכנים.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>כמה זמן יש לי גישה לקורס?</span>
+          <span class="faq-toggle"></span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            לכל החיים. תשלום חד־פעמי, גישה לתמיד — כולל עדכונים שמתווספים בעתיד. אנחנו מאמינים שלמידה לא צריכה להיות מירוץ נגד שעון.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>האם הקורס מתעדכן עם גרסאות חדשות?</span>
+          <span class="faq-toggle"></span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            כן. בכל פעם שיוצאת גרסה משמעותית של Three.js, או שמתפרסם best practice חדש בתחום, אנחנו מעדכנים את הפרקים הרלוונטיים. כל העדכונים זמינים לכם ללא תוספת תשלום.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>האם יש אפשרות החזר אם הקורס לא מתאים לי?</span>
+          <span class="faq-toggle"></span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            בהחלט. יש לנו אחריות החזר כספי מלא של 30 יום. בלי שאלות, בלי בירוקרטיה. אם הקורס לא מתאים לכם מכל סיבה שהיא — תקבלו את הכסף בחזרה.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>האם הקורס באנגלית או בעברית?</span>
+          <span class="faq-toggle"></span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            הכל בעברית — ההסברים, הפרשנויות, הדוגמאות. השמות הטכניים (כמו Three.js או shader) נשארים באנגלית כמובן, אבל ההסבר עצמו, גם של הנושאים הכי מסובכים, הוא בעברית טבעית וזורמת.
+          </div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          <span>איזו תמיכה אני מקבל אם אני נתקע?</span>
+          <span class="faq-toggle"></span>
+        </button>
+        <div class="faq-answer">
+          <div class="faq-answer-inner">
+            במסלול סטנדרט יש קהילה פתוחה לשאלות. במסלול פרימיום יש Discord סגור עם תמיכה ישירה מהמרצה ומ־TA, ובנוסף 2 שיחות זום אישיות לסקירת קוד וייעוץ על פרויקטים אישיים.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta">
+    <div class="final-cta-content reveal">
+      <h2>
+        המסע מתחיל<br>
+        <span class="accent">איפה שאתם מחליטים.</span>
+      </h2>
+      <p>
+        הצטרפו ל־12,000 תלמידים שכבר בונים את העתיד של ה־web.
+      </p>
+      <a href="#pricing" class="btn-primary" style="font-size: 1.1rem; padding: 1.3rem 2.8rem;">
+        <span>התחילו עכשיו ←</span>
+      </a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="footer-content">
+    <div class="footer-brand">
+      <div class="logo">
+        <span class="logo-mark"></span>
+        מסע התלת־ממד
+      </div>
+      <p>קורס מקיף בעברית לפיתוח חוויות תלת־ממד באינטרנט.</p>
+    </div>
+    <div class="footer-col">
+      <h4>הקורס</h4>
+      <ul>
+        <li><a href="#learn">מה תלמדו</a></li>
+        <li><a href="#curriculum">תוכן</a></li>
+        <li><a href="#pricing">מחיר</a></li>
+        <li><a href="#faq">שאלות</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>קישורים</h4>
+      <ul>
+        <li><a href="#">בלוג</a></li>
+        <li><a href="#">קהילה</a></li>
+        <li><a href="#">צור קשר</a></li>
+        <li><a href="#">תמיכה</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>משפטי</h4>
+      <ul>
+        <li><a href="#">תנאי שימוש</a></li>
+        <li><a href="#">מדיניות פרטיות</a></li>
+        <li><a href="#">החזר כספי</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 מסע התלת־ממד. כל הזכויות שמורות.</div>
+    <div>נבנה באהבה בישראל.</div>
+  </div>
+</footer>
+
+<div class="notebook-overlay" id="notebook-overlay">
+  <button class="notebook-close" id="notebook-close-btn" type="button" aria-label="חזרה לקורס">
+    <span>חזרה לקורס</span>
+    <span class="back-arrow">→</span>
+  </button>
+  <div class="notebook-loading" id="notebook-loading">טוען את המחברת</div>
+  <iframe id="notebook-iframe"
+          title="המחברת שלי"
+          class="notebook-iframe"
+          src=""
+          allow="clipboard-read; clipboard-write"></iframe>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+  // === Three.js Setup ===
+  const canvas = document.getElementById('bg-canvas');
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x1f2942, 0.04);
+
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+  camera.position.set(0, 0, 8);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const clock = new THREE.Clock();
+  let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0, scrollY = 0;
+
+  // Reusable simplex noise GLSL
+  const NOISE_GLSL = `
+    vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 mod289v4(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+    vec4 permute(vec4 x) { return mod289v4(((x*34.0)+1.0)*x); }
+    vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+    float snoise(vec3 v) {
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+      vec3 i = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+      vec3 x1 = x0 - i1 + C.xxx;
+      vec3 x2 = x0 - i2 + C.yyy;
+      vec3 x3 = x0 - D.yyy;
+      i = mod289(i);
+      vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+      float n_ = 0.142857142857;
+      vec3 ns = n_ * D.wyz - D.xzx;
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+      vec4 s0 = floor(b0)*2.0 + 1.0;
+      vec4 s1 = floor(b1)*2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+      vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+      vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+      p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+      vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+    }
+  `;
+
+  // === Scene Manager ===
+  let sceneObjects = [];
+  let currentScene = 0;
+  let cameraOverride = false;
+
+  function clearScene() {
+    sceneObjects.forEach(obj => {
+      scene.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+        else obj.material.dispose();
+      }
+    });
+    sceneObjects = [];
+    scene.fog = new THREE.FogExp2(0x1f2942, 0.04);
+    camera.position.set(0, 0, 8);
+    camera.rotation.set(0, 0, 0);
+    cameraOverride = false;
+  }
+
+  // === Scene Definitions ===
+  const SCENES = [
+
+    // 1: Aurora Ribbons
+    {
+      name: 'זוהר הקטבים',
+      init: () => {
+        const palettes = [
+          [new THREE.Color(0xe8a87c), new THREE.Color(0xc94f7c)],
+          [new THREE.Color(0xc94f7c), new THREE.Color(0x6b5fa8)],
+          [new THREE.Color(0x6b5fa8), new THREE.Color(0x4a90e2)],
+          [new THREE.Color(0xe8a87c), new THREE.Color(0xf4c592)],
+        ];
+        for (let i = 0; i < 4; i++) {
+          const geo = new THREE.PlaneGeometry(28, 1.8, 100, 1);
+          const mat = new THREE.ShaderMaterial({
+            uniforms: {
+              time: { value: 0 },
+              offset: { value: i * 1.7 },
+              color1: { value: palettes[i][0] },
+              color2: { value: palettes[i][1] },
+            },
+            vertexShader: `
+              uniform float time;
+              uniform float offset;
+              varying vec2 vUv;
+              void main() {
+                vUv = uv;
+                vec3 pos = position;
+                float wave = sin(pos.x * 0.4 + time + offset) * 0.7
+                           + cos(pos.x * 0.7 + time * 0.8 + offset) * 0.4;
+                pos.y += wave;
+                pos.z += sin(pos.x * 0.3 + time * 0.5) * 1.0;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+              }
+            `,
+            fragmentShader: `
+              uniform vec3 color1;
+              uniform vec3 color2;
+              varying vec2 vUv;
+              void main() {
+                float edge = smoothstep(0.0, 0.4, vUv.y) * smoothstep(1.0, 0.6, vUv.y);
+                vec3 col = mix(color1, color2, vUv.y);
+                gl_FragColor = vec4(col, edge * 0.55);
+              }
+            `,
+            transparent: true,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set(0, (i - 1.5) * 1.6, -3 + i * 0.5);
+          mesh.rotation.z = (i - 1.5) * 0.04;
+          mesh.userData.mat = mat;
+          scene.add(mesh);
+          sceneObjects.push(mesh);
+        }
+      },
+      animate: (t) => {
+        sceneObjects.forEach(obj => {
+          if (obj.userData.mat) obj.userData.mat.uniforms.time.value = t;
+        });
+      },
+    },
+
+    // 2: Wave Plane
+    {
+      name: 'משטח גלים',
+      init: () => {
+        const geo = new THREE.PlaneGeometry(50, 50, 90, 90);
+        const mat = new THREE.ShaderMaterial({
+          uniforms: { time: { value: 0 }, color: { value: new THREE.Color(0xe8a87c) } },
+          vertexShader: `
+            uniform float time;
+            varying float vElev;
+            void main() {
+              vec3 pos = position;
+              float dist = length(pos.xy);
+              float wave = sin(dist * 0.45 - time * 1.5) * 0.5
+                         + sin(pos.x * 0.3 + time) * 0.3
+                         + cos(pos.y * 0.4 + time * 0.7) * 0.3;
+              pos.z += wave;
+              vElev = wave;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform vec3 color;
+            varying float vElev;
+            void main() {
+              float intensity = 0.4 + abs(vElev) * 0.6;
+              gl_FragColor = vec4(color * intensity, 0.6);
+            }
+          `,
+          wireframe: true,
+          transparent: true,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2.3;
+        mesh.position.y = -3;
+        mesh.userData.mat = mat;
+        scene.add(mesh);
+        sceneObjects.push(mesh);
+      },
+      animate: (t) => {
+        sceneObjects.forEach(obj => {
+          if (obj.userData.mat) obj.userData.mat.uniforms.time.value = t;
+        });
+      },
+    },
+
+    // 3: Particle Network
+    {
+      name: 'רשת קוסמית',
+      init: () => {
+        const N = 70;
+        const positions = new Float32Array(N * 3);
+        const velocities = [];
+        for (let i = 0; i < N; i++) {
+          positions[i*3] = (Math.random() - 0.5) * 14;
+          positions[i*3+1] = (Math.random() - 0.5) * 9;
+          positions[i*3+2] = (Math.random() - 0.5) * 5 - 2;
+          velocities.push(
+            (Math.random() - 0.5) * 0.012,
+            (Math.random() - 0.5) * 0.012,
+            (Math.random() - 0.5) * 0.006
+          );
+        }
+        const pGeo = new THREE.BufferGeometry();
+        pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const points = new THREE.Points(pGeo, new THREE.PointsMaterial({
+          color: 0xe8a87c, size: 0.1, transparent: true, opacity: 0.95,
+        }));
+        points.userData.velocities = velocities;
+        points.userData.N = N;
+        scene.add(points);
+        sceneObjects.push(points);
+
+        const lineGeo = new THREE.BufferGeometry();
+        const linePositions = new Float32Array(N * N * 3);
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+          color: 0xe8a87c, transparent: true, opacity: 0.25,
+        }));
+        lines.userData.isLines = true;
+        scene.add(lines);
+        sceneObjects.push(lines);
+      },
+      animate: (t) => {
+        const points = sceneObjects.find(o => o.isPoints);
+        const lines = sceneObjects.find(o => o.userData.isLines);
+        if (!points || !lines) return;
+        const posAttr = points.geometry.attributes.position;
+        const v = points.userData.velocities;
+        const N = points.userData.N;
+        for (let i = 0; i < N; i++) {
+          let x = posAttr.array[i*3] + v[i*3];
+          let y = posAttr.array[i*3+1] + v[i*3+1];
+          let z = posAttr.array[i*3+2] + v[i*3+2];
+          if (Math.abs(x) > 7) v[i*3] *= -1;
+          if (Math.abs(y) > 4.5) v[i*3+1] *= -1;
+          if (Math.abs(z + 2) > 2.5) v[i*3+2] *= -1;
+          posAttr.array[i*3] = x;
+          posAttr.array[i*3+1] = y;
+          posAttr.array[i*3+2] = z;
+        }
+        posAttr.needsUpdate = true;
+        const linePos = lines.geometry.attributes.position;
+        let li = 0;
+        const maxIdx = linePos.array.length - 6;
+        for (let i = 0; i < N; i++) {
+          for (let j = i + 1; j < N; j++) {
+            const dx = posAttr.array[i*3] - posAttr.array[j*3];
+            const dy = posAttr.array[i*3+1] - posAttr.array[j*3+1];
+            const dz = posAttr.array[i*3+2] - posAttr.array[j*3+2];
+            const d = Math.sqrt(dx*dx + dy*dy + dz*dz);
+            if (d < 2.4 && li < maxIdx) {
+              linePos.array[li++] = posAttr.array[i*3];
+              linePos.array[li++] = posAttr.array[i*3+1];
+              linePos.array[li++] = posAttr.array[i*3+2];
+              linePos.array[li++] = posAttr.array[j*3];
+              linePos.array[li++] = posAttr.array[j*3+1];
+              linePos.array[li++] = posAttr.array[j*3+2];
+            }
+          }
+        }
+        for (let k = li; k < linePos.array.length; k++) linePos.array[k] = 0;
+        linePos.needsUpdate = true;
+      },
+    },
+
+    // 4: Cosmic Nebula
+    {
+      name: 'ערפילית',
+      init: () => {
+        const N = 4500;
+        const positions = new Float32Array(N * 3);
+        const colors = new Float32Array(N * 3);
+        const c1 = new THREE.Color(0xe8a87c);
+        const c2 = new THREE.Color(0xc94f7c);
+        const c3 = new THREE.Color(0x4a4f8a);
+        const centers = [[-3.5, 1, -2], [3.5, -1, -2], [0, 2, -4]];
+        for (let i = 0; i < N; i++) {
+          const cluster = Math.floor(Math.random() * 3);
+          const [cx, cy, cz] = centers[cluster];
+          const radius = Math.pow(Math.random(), 0.6) * 4.5;
+          const angle = Math.random() * Math.PI * 2;
+          const angle2 = (Math.random() - 0.5) * Math.PI;
+          positions[i*3] = cx + Math.cos(angle) * radius * Math.cos(angle2);
+          positions[i*3+1] = cy + Math.sin(angle) * radius * Math.cos(angle2) * 0.7;
+          positions[i*3+2] = cz + Math.sin(angle2) * radius;
+          const tt = Math.random();
+          let c;
+          if (tt < 0.5) c = c1.clone().lerp(c2, tt * 2);
+          else c = c2.clone().lerp(c3, (tt - 0.5) * 2);
+          colors[i*3] = c.r;
+          colors[i*3+1] = c.g;
+          colors[i*3+2] = c.b;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        const points = new THREE.Points(geo, new THREE.PointsMaterial({
+          size: 0.08, vertexColors: true, transparent: true,
+          opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false,
+        }));
+        scene.add(points);
+        sceneObjects.push(points);
+      },
+      animate: (t) => {
+        sceneObjects.forEach(obj => {
+          obj.rotation.z = t * 0.03;
+          obj.rotation.y = t * 0.02;
+        });
+      },
+    },
+
+    // 5: Morphing Hero
+    {
+      name: 'צורה מתפתחת',
+      init: () => {
+        const geo = new THREE.IcosahedronGeometry(2.6, 32);
+        const mat = new THREE.ShaderMaterial({
+          uniforms: { time: { value: 0 }, color: { value: new THREE.Color(0xe8a87c) } },
+          vertexShader: NOISE_GLSL + `
+            uniform float time;
+            varying float vNoise;
+            void main() {
+              float n = snoise(position * 0.45 + vec3(time * 0.35));
+              vNoise = n;
+              vec3 pos = position + normal * n * 0.7;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform vec3 color;
+            varying float vNoise;
+            void main() {
+              vec3 col = mix(color, vec3(1.0, 0.85, 0.65), vNoise * 0.5 + 0.5);
+              gl_FragColor = vec4(col, 0.7);
+            }
+          `,
+          wireframe: true,
+          transparent: true,
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(0, 0, -2);
+        mesh.userData.mat = mat;
+        scene.add(mesh);
+        sceneObjects.push(mesh);
+      },
+      animate: (t) => {
+        sceneObjects.forEach(obj => {
+          if (obj.userData.mat) obj.userData.mat.uniforms.time.value = t;
+          obj.rotation.y = t * 0.15;
+          obj.rotation.x = t * 0.1;
+        });
+      },
+    },
+
+    // 6: Liquid Metaballs
+    {
+      name: 'מתכת נוזלית',
+      init: () => {
+        for (let i = 0; i < 4; i++) {
+          const geo = new THREE.SphereGeometry(1.3 + i * 0.15, 64, 64);
+          const mat = new THREE.ShaderMaterial({
+            uniforms: { time: { value: 0 }, offset: { value: i * 1.7 } },
+            vertexShader: NOISE_GLSL + `
+              uniform float time;
+              uniform float offset;
+              varying vec3 vNormal;
+              varying float vNoise;
+              void main() {
+                float n = snoise(position * 0.55 + vec3(time * 0.35 + offset));
+                vec3 pos = position + normal * n * 0.55;
+                vNormal = normalize(normalMatrix * normal);
+                vNoise = n;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+              }
+            `,
+            fragmentShader: `
+              varying vec3 vNormal;
+              varying float vNoise;
+              void main() {
+                vec3 base = vec3(0.91, 0.66, 0.49);
+                vec3 highlight = vec3(1.0, 0.9, 0.72);
+                float fresnel = pow(1.0 - abs(vNormal.z), 2.5);
+                vec3 col = mix(base, highlight, fresnel + vNoise * 0.3);
+                gl_FragColor = vec4(col, 0.55);
+              }
+            `,
+            transparent: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.userData.mat = mat;
+          mesh.userData.idx = i;
+          scene.add(mesh);
+          sceneObjects.push(mesh);
+        }
+      },
+      animate: (t) => {
+        sceneObjects.forEach((obj, i) => {
+          if (obj.userData.mat) obj.userData.mat.uniforms.time.value = t;
+          const angle = t * 0.3 + i / 4 * Math.PI * 2;
+          obj.position.x = Math.cos(angle) * 2.2;
+          obj.position.y = Math.sin(angle * 1.3) * 1.4;
+          obj.position.z = -2 + Math.sin(angle * 0.7) * 0.5;
+        });
+      },
+    },
+
+    // 7: Crystal Shards
+    {
+      name: 'פיסות קריסטל',
+      init: () => {
+        const geos = [
+          new THREE.OctahedronGeometry(1, 0),
+          new THREE.TetrahedronGeometry(1.1, 0),
+          new THREE.IcosahedronGeometry(0.8, 0),
+        ];
+        for (let i = 0; i < 14; i++) {
+          const geo = geos[i % geos.length].clone();
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0xe8a87c,
+            transparent: true,
+            opacity: 0.18 + Math.random() * 0.15,
+            wireframe: true,
+          });
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.set(
+            (Math.random() - 0.5) * 13,
+            (Math.random() - 0.5) * 8,
+            (Math.random() - 0.5) * 6 - 2
+          );
+          mesh.scale.setScalar(0.4 + Math.random() * 0.9);
+          mesh.userData.rotSpeed = {
+            x: (Math.random() - 0.5) * 0.006,
+            y: (Math.random() - 0.5) * 0.006,
+          };
+          mesh.userData.basePos = mesh.position.clone();
+          mesh.userData.phase = Math.random() * Math.PI * 2;
+          scene.add(mesh);
+          sceneObjects.push(mesh);
+        }
+      },
+      animate: (t) => {
+        sceneObjects.forEach((obj) => {
+          if (obj.userData.rotSpeed) {
+            obj.rotation.x += obj.userData.rotSpeed.x;
+            obj.rotation.y += obj.userData.rotSpeed.y;
+            obj.position.y = obj.userData.basePos.y + Math.sin(t * 0.5 + obj.userData.phase) * 0.4;
+            obj.position.x = obj.userData.basePos.x + Math.cos(t * 0.3 + obj.userData.phase) * 0.3;
+          }
+        });
+      },
+    },
+
+    // 8: Wireframe Tunnel
+    {
+      name: 'מנהרת מהירות',
+      init: () => {
+        cameraOverride = true;
+        camera.position.set(0, 0, 0);
+        for (let i = 0; i < 35; i++) {
+          const geo = new THREE.TorusGeometry(3.2, 0.04, 4, 28);
+          const mat = new THREE.MeshBasicMaterial({
+            color: 0xe8a87c,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.6,
+          });
+          const ring = new THREE.Mesh(geo, mat);
+          ring.position.z = -i * 1.4;
+          ring.userData.baseRot = i * 0.12;
+          ring.rotation.z = ring.userData.baseRot;
+          scene.add(ring);
+          sceneObjects.push(ring);
+        }
+      },
+      animate: (t) => {
+        sceneObjects.forEach((obj) => {
+          obj.position.z += 0.1;
+          if (obj.position.z > 3) obj.position.z -= 35 * 1.4;
+          obj.rotation.z = obj.userData.baseRot + t * 0.3;
+          const distFactor = Math.max(0, 1 - Math.abs(obj.position.z + 15) / 35);
+          obj.material.opacity = distFactor * 0.7;
+        });
+      },
+    },
+
+    // 9: Vortex
+    {
+      name: 'מערבולת',
+      init: () => {
+        const N = 3500;
+        const positions = new Float32Array(N * 3);
+        const data = [];
+        for (let i = 0; i < N; i++) {
+          const radius = Math.random() * 9 + 0.3;
+          const angle = Math.random() * Math.PI * 2;
+          const height = (Math.random() - 0.5) * 2.5;
+          data.push({ angle, radius, speed: 0.5 + Math.random() * 1.8, height });
+          positions[i*3] = Math.cos(angle) * radius;
+          positions[i*3+1] = height;
+          positions[i*3+2] = Math.sin(angle) * radius - 2;
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const mat = new THREE.PointsMaterial({
+          color: 0xe8a87c, size: 0.05, transparent: true,
+          opacity: 0.75, blending: THREE.AdditiveBlending, depthWrite: false,
+        });
+        const points = new THREE.Points(geo, mat);
+        points.userData.data = data;
+        scene.add(points);
+        sceneObjects.push(points);
+      },
+      animate: (t) => {
+        const points = sceneObjects[0];
+        if (!points) return;
+        const posAttr = points.geometry.attributes.position;
+        const data = points.userData.data;
+        for (let i = 0; i < data.length; i++) {
+          const d = data[i];
+          d.angle += d.speed * 0.025 / Math.max(d.radius, 0.5);
+          d.radius -= 0.018;
+          if (d.radius < 0.3) {
+            d.radius = 9 + Math.random() * 2;
+            d.angle = Math.random() * Math.PI * 2;
+          }
+          posAttr.array[i*3] = Math.cos(d.angle) * d.radius;
+          posAttr.array[i*3+1] = d.height + Math.sin(t + i * 0.01) * 0.1;
+          posAttr.array[i*3+2] = Math.sin(d.angle) * d.radius - 2;
+        }
+        posAttr.needsUpdate = true;
+      },
+    },
+
+    // 10: Synthwave Grid
+    {
+      name: 'רשת סינת׳וויב',
+      init: () => {
+        cameraOverride = true;
+        camera.position.set(0, 0.6, 4);
+        scene.fog = new THREE.FogExp2(0x1f2942, 0.02);
+
+        const gridGeo = new THREE.PlaneGeometry(60, 100, 30, 50);
+        const gridMat = new THREE.ShaderMaterial({
+          uniforms: { time: { value: 0 } },
+          vertexShader: `
+            uniform float time;
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              vec3 pos = position;
+              pos.y = mod(pos.y + time * 4.0, 100.0) - 50.0;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+          `,
+          fragmentShader: `
+            varying vec2 vUv;
+            void main() {
+              float fade = smoothstep(0.0, 0.3, vUv.y) * smoothstep(1.0, 0.45, vUv.y);
+              vec3 col = mix(vec3(0.93, 0.31, 0.49), vec3(0.42, 0.37, 0.65), vUv.y);
+              gl_FragColor = vec4(col, fade * 0.85);
+            }
+          `,
+          wireframe: true,
+          transparent: true,
+        });
+        const grid = new THREE.Mesh(gridGeo, gridMat);
+        grid.rotation.x = -Math.PI / 2;
+        grid.position.y = -2.5;
+        grid.userData.mat = gridMat;
+        scene.add(grid);
+        sceneObjects.push(grid);
+
+        const sunGeo = new THREE.CircleGeometry(3.2, 64);
+        const sunMat = new THREE.ShaderMaterial({
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            varying vec2 vUv;
+            void main() {
+              float dist = distance(vUv, vec2(0.5));
+              float bandY = vUv.y;
+              float bands = step(0.5, fract(bandY * 10.0)) * smoothstep(0.5, 0.0, bandY);
+              vec3 sunColor = mix(vec3(1.0, 0.7, 0.4), vec3(0.93, 0.31, 0.49), 1.0 - vUv.y);
+              float alpha = (1.0 - smoothstep(0.46, 0.5, dist)) * (1.0 - bands * 0.75);
+              gl_FragColor = vec4(sunColor, alpha);
+            }
+          `,
+          transparent: true,
+          depthWrite: false,
+        });
+        const sun = new THREE.Mesh(sunGeo, sunMat);
+        sun.position.set(0, 0.5, -8);
+        scene.add(sun);
+        sceneObjects.push(sun);
+      },
+      animate: (t) => {
+        const grid = sceneObjects[0];
+        if (grid && grid.userData.mat) grid.userData.mat.uniforms.time.value = t;
+      },
+    },
+  ];
+
+  function loadScene(idx) {
+    clearScene();
+    currentScene = idx;
+    SCENES[idx].init();
+
+    document.querySelectorAll('.bg-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === idx);
+    });
+
+    const nameEl = document.getElementById('bg-current-name');
+    nameEl.textContent = SCENES[idx].name;
+    nameEl.classList.add('visible');
+    clearTimeout(window._nameTimeout);
+    window._nameTimeout = setTimeout(() => nameEl.classList.remove('visible'), 2200);
+  }
+
+  loadScene(0);
+
+  document.querySelectorAll('.bg-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.scene);
+      loadScene(idx);
+    });
+  });
+
+  // === Mouse / scroll ===
+  document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 0.4;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 0.4;
+  });
+  window.addEventListener('scroll', () => {
+    scrollY = window.scrollY;
+  });
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  // === Animation loop ===
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime();
+    targetX += (mouseX - targetX) * 0.05;
+    targetY += (mouseY - targetY) * 0.05;
+
+    if (SCENES[currentScene]) SCENES[currentScene].animate(t);
+
+    if (!cameraOverride) {
+      camera.position.x = targetX * 2;
+      camera.position.y = -targetY * 2 - scrollY * 0.002;
+      camera.lookAt(0, 0, 0);
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // === Nav scroll ===
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 80) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  });
+
+  // === Module accordion ===
+  function toggleModule(header) {
+    const module = header.parentElement;
+    const isActive = module.classList.contains('active');
+    document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+    if (!isActive) module.classList.add('active');
+  }
+
+  // === FAQ accordion ===
+  function toggleFaq(button) {
+    button.parentElement.classList.toggle('active');
+  }
+
+  // === Reveal on scroll ===
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -100px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // === Notebook Overlay ===
+  const notebookOverlay = document.getElementById('notebook-overlay');
+  const notebookIframe = document.getElementById('notebook-iframe');
+  const notebookLoading = document.getElementById('notebook-loading');
+  const notebookCloseBtn = document.getElementById('notebook-close-btn');
+  const NOTEBOOK_URL = 'https://gagula22.github.io/hamachberet-sheli/';
+  let notebookLoaded = false;
+  let notebookPreloadStarted = false;
+
+  function preloadNotebook() {
+    if (notebookPreloadStarted) return;
+    notebookPreloadStarted = true;
+    notebookIframe.src = NOTEBOOK_URL;
+  }
+
+  function openNotebook(e) {
+    if (e) e.preventDefault();
+    preloadNotebook();
+    if (notebookLoaded) {
+      notebookLoading.classList.add('hidden');
+    } else {
+      notebookLoading.classList.remove('hidden');
+    }
+    notebookOverlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeNotebook() {
+    notebookOverlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  notebookIframe.addEventListener('load', () => {
+    if (notebookIframe.getAttribute('src')) {
+      notebookLoaded = true;
+      notebookLoading.classList.add('hidden');
+    }
+  });
+
+  // Background preload after main page settles
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(preloadNotebook, { timeout: 2500 });
+  } else {
+    setTimeout(preloadNotebook, 1500);
+  }
+
+  // Instant preload on hover/focus
+  document.querySelectorAll('.open-notebook').forEach(el => {
+    el.addEventListener('mouseenter', preloadNotebook, { once: true });
+    el.addEventListener('focus', preloadNotebook, { once: true });
+    el.addEventListener('click', openNotebook);
+  });
+
+  notebookCloseBtn.addEventListener('click', closeNotebook);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && notebookOverlay.classList.contains('active')) {
+      closeNotebook();
+    }
+  });
+</script>
+
+</body>
+</html>
