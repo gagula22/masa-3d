@@ -1326,11 +1326,14 @@
       visibility: visible;
     }
 
-    body.notebook-open,
-    html.notebook-open {
+    html.notebook-open,
+    body.notebook-open {
       overflow: hidden !important;
-      height: 100vh !important;
-      max-height: 100vh !important;
+      height: 100% !important;
+      width: 100% !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
     }
 
     .notebook-iframe {
@@ -2906,6 +2909,8 @@
     notebookIframe.src = NOTEBOOK_URL;
   }
 
+  let savedScrollY = 0;
+
   function openNotebook(e) {
     if (e) e.preventDefault();
     preloadNotebook();
@@ -2914,6 +2919,7 @@
     } else {
       notebookLoading.classList.remove('hidden');
     }
+    savedScrollY = window.scrollY;
     notebookOverlay.classList.add('active');
     document.body.classList.add('notebook-open');
     document.documentElement.classList.add('notebook-open');
@@ -2923,6 +2929,7 @@
     notebookOverlay.classList.remove('active');
     document.body.classList.remove('notebook-open');
     document.documentElement.classList.remove('notebook-open');
+    window.scrollTo(0, savedScrollY);
   }
 
   notebookIframe.addEventListener('load', () => {
