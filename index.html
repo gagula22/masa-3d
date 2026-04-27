@@ -2936,6 +2936,22 @@
     if (notebookIframe.getAttribute('src')) {
       notebookLoaded = true;
       notebookLoading.classList.add('hidden');
+      // Inject CSS into iframe to fix double scrollbar issue (same-origin OK)
+      try {
+        const iframeDoc = notebookIframe.contentDocument;
+        if (iframeDoc) {
+          const style = iframeDoc.createElement('style');
+          style.textContent = `
+            html, body {
+              overflow-x: hidden !important;
+              max-width: 100vw !important;
+            }
+          `;
+          iframeDoc.head.appendChild(style);
+        }
+      } catch (err) {
+        // Cross-origin or other issue — fail silently
+      }
     }
   });
 
