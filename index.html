@@ -1184,7 +1184,7 @@
     /* === Background Switcher Panel === */
     .bg-switcher {
       position: fixed;
-      right: 1.2rem;
+      left: 1.2rem;
       top: 50%;
       transform: translateY(-50%);
       z-index: 50;
@@ -1240,7 +1240,7 @@
 
     .bg-btn-tooltip {
       position: absolute;
-      right: calc(100% + 14px);
+      left: calc(100% + 14px);
       top: 50%;
       transform: translateY(-50%);
       background: var(--bg-card);
@@ -1254,7 +1254,7 @@
       transition: opacity 0.2s, transform 0.2s;
       font-family: 'Assistant', sans-serif;
       font-weight: 500;
-      transform: translateY(-50%) translateX(8px);
+      transform: translateY(-50%) translateX(-8px);
     }
 
     .bg-btn:hover .bg-btn-tooltip {
@@ -1317,6 +1317,7 @@
       background: var(--bg);
       opacity: 0;
       visibility: hidden;
+      overflow: hidden;
       transition: opacity 0.45s ease, visibility 0.45s ease;
     }
 
@@ -1491,7 +1492,7 @@
       }
 
       .bg-switcher {
-        right: 0.5rem;
+        left: 0.5rem;
         padding: 0.5rem 0.3rem;
       }
 
@@ -1533,7 +1534,7 @@
 
 <aside class="bg-switcher">
   <div class="bg-switcher-label">רקע</div>
-  <button class="bg-btn active" data-scene="0">1<span class="bg-btn-tooltip">זוהר הקטבים</span></button>
+  <button class="bg-btn" data-scene="0">1<span class="bg-btn-tooltip">זוהר הקטבים</span></button>
   <button class="bg-btn" data-scene="1">2<span class="bg-btn-tooltip">משטח גלים</span></button>
   <button class="bg-btn" data-scene="2">3<span class="bg-btn-tooltip">רשת קוסמית</span></button>
   <button class="bg-btn" data-scene="3">4<span class="bg-btn-tooltip">ערפילית</span></button>
@@ -1541,7 +1542,7 @@
   <button class="bg-btn" data-scene="5">6<span class="bg-btn-tooltip">מתכת נוזלית</span></button>
   <button class="bg-btn" data-scene="6">7<span class="bg-btn-tooltip">פיסות קריסטל</span></button>
   <button class="bg-btn" data-scene="7">8<span class="bg-btn-tooltip">מנהרת מהירות</span></button>
-  <button class="bg-btn" data-scene="8">9<span class="bg-btn-tooltip">מערבולת</span></button>
+  <button class="bg-btn active" data-scene="8">9<span class="bg-btn-tooltip">מערבולת</span></button>
   <button class="bg-btn" data-scene="9">10<span class="bg-btn-tooltip">רשת סינת׳וויב</span></button>
 </aside>
 
@@ -2811,7 +2812,7 @@
     window._nameTimeout = setTimeout(() => nameEl.classList.remove('visible'), 2200);
   }
 
-  loadScene(0);
+  loadScene(8);
 
   document.querySelectorAll('.bg-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -2906,11 +2907,13 @@
     }
     notebookOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
   }
 
   function closeNotebook() {
     notebookOverlay.classList.remove('active');
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   }
 
   notebookIframe.addEventListener('load', () => {
