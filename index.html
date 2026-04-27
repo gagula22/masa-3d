@@ -1326,12 +1326,21 @@
       visibility: visible;
     }
 
+    body.notebook-open,
+    html.notebook-open {
+      overflow: hidden !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+    }
+
     .notebook-iframe {
       width: 100%;
-      height: 100vh;
+      height: 100%;
       border: none;
       display: block;
       background: #FAF6F0;
+      position: absolute;
+      inset: 0;
     }
 
     .notebook-close {
@@ -2906,14 +2915,14 @@
       notebookLoading.classList.remove('hidden');
     }
     notebookOverlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
+    document.body.classList.add('notebook-open');
+    document.documentElement.classList.add('notebook-open');
   }
 
   function closeNotebook() {
     notebookOverlay.classList.remove('active');
-    document.body.style.overflow = '';
-    document.documentElement.style.overflow = '';
+    document.body.classList.remove('notebook-open');
+    document.documentElement.classList.remove('notebook-open');
   }
 
   notebookIframe.addEventListener('load', () => {
