@@ -1351,7 +1351,7 @@
       top: 3rem;
       left: 56%;
       transform: translateX(-50%);
-      z-index: 201;
+      z-index: 9999;
       padding: 0.7rem 1.6rem;
       background: rgba(31, 41, 66, 0.92);
       color: var(--accent);
@@ -1360,13 +1360,18 @@
       font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
+      display: none;
       align-items: center;
       gap: 0.6rem;
       transition: background 0.3s, color 0.3s, box-shadow 0.3s;
       backdrop-filter: blur(12px);
       border-radius: 999px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      will-change: transform;
+    }
+
+    body.notebook-open .notebook-close {
+      display: flex;
     }
 
     .notebook-close:hover {
@@ -2175,10 +2180,6 @@
 </footer>
 
 <div class="notebook-overlay" id="notebook-overlay">
-  <button class="notebook-close" id="notebook-close-btn" type="button" aria-label="חזרה לקורס">
-    <span>חזרה לקורס</span>
-    <span class="back-arrow">→</span>
-  </button>
   <div class="notebook-loading" id="notebook-loading">טוען את המחברת</div>
   <iframe id="notebook-iframe"
           title="המחברת שלי"
@@ -2186,6 +2187,11 @@
           src=""
           allow="clipboard-read; clipboard-write"></iframe>
 </div>
+
+<button class="notebook-close" id="notebook-close-btn" type="button" aria-label="חזרה לקורס">
+  <span>חזרה לקורס</span>
+  <span class="back-arrow">→</span>
+</button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
