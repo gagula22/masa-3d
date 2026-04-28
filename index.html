@@ -1363,26 +1363,29 @@
 
     .notebook-close {
       position: fixed !important;
-      top: 50px !important;
-      left: 56% !important;
-      right: auto !important;
+      top: 30px !important;
+      right: 130px !important;
+      left: auto !important;
       bottom: auto !important;
-      transform: translateX(-50%) translateZ(0) !important;
+      transform: translateZ(0) !important;
       z-index: 2147483647 !important;
-      padding: 0.7rem 1.6rem;
+      width: 32px;
+      height: 32px;
+      padding: 0;
       background: rgba(31, 41, 66, 0.95);
       color: var(--accent);
       border: 1px solid var(--accent);
       font-family: 'Assistant', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 600;
+      font-size: 1rem;
+      font-weight: 400;
       cursor: pointer;
       display: none;
       align-items: center;
-      gap: 0.6rem;
-      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      justify-content: center;
+      gap: 0;
+      transition: background 0.3s, color 0.3s, transform 0.3s, box-shadow 0.3s;
       backdrop-filter: blur(12px);
-      border-radius: 999px;
+      border-radius: 50%;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
       margin: 0 !important;
       line-height: 1;
@@ -1395,17 +1398,24 @@
     .notebook-close:hover {
       background: var(--accent);
       color: var(--bg);
+      transform: translateZ(0) scale(1.1) !important;
       box-shadow: 0 6px 30px rgba(232, 168, 124, 0.4);
     }
 
     .notebook-close .back-arrow {
-      transition: transform 0.3s;
-      font-size: 1.1rem;
-      line-height: 1;
+      display: none;
     }
 
-    .notebook-close:hover .back-arrow {
-      transform: translateX(4px);
+    .notebook-close .x-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+      font-weight: 300;
+      color: var(--accent);
+      display: block;
+    }
+
+    .notebook-close:hover .x-icon {
+      color: var(--bg);
     }
 
     .notebook-loading {
@@ -2206,9 +2216,8 @@
           allow="clipboard-read; clipboard-write"></iframe>
 </div>
 
-<button class="notebook-close" id="notebook-close-btn" type="button" aria-label="חזרה לקורס">
-  <span>חזרה לקורס</span>
-  <span class="back-arrow">→</span>
+<button class="notebook-close" id="notebook-close-btn" type="button" aria-label="חזרה לקורס" title="חזרה לקורס">
+  <span class="x-icon">×</span>
 </button>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
