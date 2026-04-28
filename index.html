@@ -1350,8 +1350,8 @@
       position: fixed;
       top: 3rem;
       left: 56%;
-      transform: translateX(-50%);
-      z-index: 9999;
+      transform: translateX(-50%) translateZ(0);
+      z-index: 2147483647;
       padding: 0.7rem 1.6rem;
       background: rgba(31, 41, 66, 0.92);
       color: var(--accent);
@@ -1368,6 +1368,8 @@
       border-radius: 999px;
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
       will-change: transform;
+      isolation: isolate;
+      contain: layout;
     }
 
     body.notebook-open .notebook-close {
@@ -2916,6 +2918,11 @@
   }
 
   let savedScrollY = 0;
+
+  // Force button to be direct body child for proper fixed positioning
+  if (notebookCloseBtn.parentElement !== document.body) {
+    document.body.appendChild(notebookCloseBtn);
+  }
 
   function openNotebook(e) {
     if (e) e.preventDefault();
