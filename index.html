@@ -2979,6 +2979,23 @@
             }
           `;
           iframeDoc.head.appendChild(style);
+
+          // Lock close button position on every iframe scroll
+          const lockButton = () => {
+            if (notebookCloseBtn) {
+              notebookCloseBtn.style.position = 'fixed';
+              notebookCloseBtn.style.top = '50px';
+              notebookCloseBtn.style.left = '56%';
+              notebookCloseBtn.style.transform = 'translateX(-50%) translateZ(0)';
+            }
+          };
+
+          // Listen to scroll on iframe's window, document and any scrollable element
+          const iframeWin = notebookIframe.contentWindow;
+          if (iframeWin) {
+            iframeWin.addEventListener('scroll', lockButton, { passive: true, capture: true });
+            iframeDoc.addEventListener('scroll', lockButton, { passive: true, capture: true });
+          }
         }
       } catch (err) {
         // Cross-origin or other issue — fail silently
