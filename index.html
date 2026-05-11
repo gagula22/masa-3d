@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>מסע התלת־ממד · קורס פיתוח 3D מקיף</title>
+  <title>צעד אחרי צעד · קורס מסחר לפי שיטת וויקוף</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://gagula22.github.io">
   <link rel="dns-prefetch" href="https://gagula22.github.io">
+  <!-- Preload videos.json to start the fetch in parallel with HTML parsing -->
+  <link rel="preload" as="fetch" href="videos.json" crossorigin="anonymous">
+  <!-- Preconnect to video providers for faster iframe load on click -->
+  <link rel="preconnect" href="https://www.youtube.com">
+  <link rel="preconnect" href="https://www.youtube-nocookie.com">
+  <link rel="preconnect" href="https://player.vimeo.com">
+  <link rel="preconnect" href="https://i.ytimg.com">
+  <link rel="dns-prefetch" href="https://www.youtube.com">
+  <link rel="dns-prefetch" href="https://player.vimeo.com">
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Assistant:wght@300;400;500;600;700&family=Frank+Ruhl+Libre:wght@400;500;700;900&display=swap" rel="stylesheet">
 
   <style>
@@ -652,6 +661,114 @@
       background: var(--accent);
       border-radius: 50%;
       flex-shrink: 0;
+    }
+
+    /* === CATEGORIES GRID (new curriculum style) === */
+    .categories-grid {
+      max-width: 1300px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+    }
+
+    .category-card {
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.8rem;
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .category-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 0;
+      height: 2px;
+      background: var(--accent);
+      transition: width 0.4s ease;
+    }
+
+    .category-card:hover {
+      background: var(--bg-card);
+      border-color: var(--line-strong);
+      transform: translateY(-3px);
+    }
+
+    .category-card:hover::before {
+      width: 100%;
+    }
+
+    .category-num {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+    }
+
+    .category-card h3 {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 0.7rem;
+      letter-spacing: -0.01em;
+      color: var(--text);
+    }
+
+    .category-card p {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 1.5rem;
+      flex-grow: 1;
+    }
+
+    .category-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .category-count {
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .category-arrow {
+      color: var(--text-dim);
+      font-size: 1.3rem;
+      transition: transform 0.3s, color 0.3s;
+    }
+
+    .category-card:hover .category-arrow {
+      color: var(--accent);
+      transform: translateX(-6px);
+    }
+
+    @media (max-width: 1024px) {
+      .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .categories-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* INSTRUCTOR */
@@ -1451,6 +1568,322 @@
       50% { transform: scaleX(1); opacity: 1; }
     }
 
+    /* === LESSONS OVERLAY === */
+    .lessons-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: var(--bg);
+      opacity: 0;
+      visibility: hidden;
+      overflow: hidden;
+      transition: opacity 0.45s ease, visibility 0.45s ease;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+    }
+
+    .lessons-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    html.lessons-open,
+    body.lessons-open {
+      overflow: hidden !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+    }
+
+    /* Sidebar */
+    .lessons-sidebar {
+      background: var(--bg-soft);
+      border-left: 1px solid var(--line);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .lessons-sidebar-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      background: var(--bg-soft);
+      z-index: 10;
+    }
+
+    .lessons-sidebar-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .lessons-search {
+      width: 100%;
+      padding: 0.7rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-family: 'Assistant', sans-serif;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      direction: rtl;
+      text-align: right;
+      transition: border-color 0.3s;
+    }
+
+    .lessons-search:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .lessons-search::placeholder {
+      color: var(--text-faint);
+    }
+
+    .lessons-categories {
+      flex: 1;
+      padding: 0.5rem 0;
+    }
+
+    .lesson-category {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .lesson-category-header {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.2s;
+      user-select: none;
+    }
+
+    .lesson-category-header:hover {
+      background: rgba(232, 168, 124, 0.05);
+    }
+
+    .lesson-category.active .lesson-category-header {
+      background: rgba(232, 168, 124, 0.08);
+    }
+
+    .lesson-category-name {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .lesson-category-count {
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: rgba(232, 168, 124, 0.1);
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+    }
+
+    .lesson-category-toggle {
+      color: var(--text-faint);
+      font-size: 0.9rem;
+      transition: transform 0.3s;
+      margin-right: 0.5rem;
+    }
+
+    .lesson-category.active .lesson-category-toggle {
+      transform: rotate(90deg);
+      color: var(--accent);
+    }
+
+    .lesson-items {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+
+    .lesson-category.active .lesson-items {
+      max-height: 5000px;
+    }
+
+    .lesson-item {
+      padding: 0.75rem 1.5rem 0.75rem 2.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-right: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .lesson-item:hover {
+      background: rgba(232, 168, 124, 0.04);
+      border-right-color: var(--accent);
+    }
+
+    .lesson-item.playing {
+      background: rgba(232, 168, 124, 0.1);
+      border-right-color: var(--accent);
+    }
+
+    .lesson-item-title {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.45;
+      transition: color 0.2s;
+    }
+
+    .lesson-item:hover .lesson-item-title,
+    .lesson-item.playing .lesson-item-title {
+      color: var(--text);
+    }
+
+    .lesson-item-date {
+      font-size: 0.72rem;
+      /* Same color as the title so it stays readable */
+      color: var(--text-dim);
+      letter-spacing: 0.03em;
+      transition: color 0.2s;
+    }
+    .lesson-item:hover .lesson-item-date,
+    .lesson-item.playing .lesson-item-date {
+      color: var(--text);
+    }
+
+    /* Player area */
+    .lessons-player {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .lessons-player-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+    }
+
+    .lessons-player-title-wrap {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .lessons-player-eyebrow {
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+
+    .lessons-player-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      margin-bottom: 0.3rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .lessons-player-meta {
+      color: var(--text-faint);
+      font-size: 0.85rem;
+    }
+
+    .lessons-close {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      background: rgba(31, 41, 66, 0.95);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 1.3rem;
+      font-weight: 300;
+      line-height: 1;
+      transition: all 0.3s;
+    }
+
+    .lessons-close:hover {
+      background: var(--accent);
+      color: var(--bg);
+      transform: scale(1.08);
+    }
+
+    .lessons-video-wrap {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+    }
+
+    .lessons-video-frame {
+      width: 85%;
+      max-width: 935px;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .lessons-video-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+    }
+
+    .lessons-empty {
+      color: var(--text-dim);
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.9rem;
+    }
+
+    /* MOBILE */
+    @media (max-width: 900px) {
+      .lessons-overlay {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+      }
+      .lessons-sidebar {
+        max-height: 40vh;
+        height: auto;
+      }
+      .lessons-player {
+        height: auto;
+      }
+      .lessons-player-header {
+        padding: 1rem;
+      }
+      .lessons-player-title {
+        font-size: 1.1rem;
+      }
+      .lessons-video-wrap {
+        padding: 1rem;
+      }
+    }
+
     /* MOBILE */
     @media (max-width: 1024px) {
       .learn-grid {
@@ -1555,16 +1988,1142 @@
         font-size: 0.5rem;
       }
     }
+  
+    /* Refresh-lives button + modal */
+    .refresh-lives-btn {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      z-index: 1100;
+      padding: 0.7rem 1.1rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 999px;
+      font-family: 'Assistant', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s;
+    }
+    .refresh-lives-btn:hover {
+      background: var(--accent-bright);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(232, 168, 124, 0.4);
+    }
+    .refresh-lives-btn::before {
+      content: '⟳';
+      font-size: 1.1rem;
+    }
+    .refresh-lives-tooltip {
+      position: absolute;
+      bottom: calc(100% + 0.6rem);
+      /* Anchor LEFT edge to button so tooltip extends RIGHT into the screen
+         (button sits at bottom-left of viewport, so tooltip must grow rightward) */
+      left: 0;
+      right: auto;
+      background: rgba(0, 0, 0, 0.92);
+      color: #f4f1ea;
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 400;
+      /* Limit width and allow wrapping so we never overflow the viewport */
+      width: max-content;
+      max-width: min(360px, calc(100vw - 2rem));
+      white-space: normal;
+      line-height: 1.5;
+      text-align: right;
+      direction: rtl;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(232, 168, 124, 0.3);
+    }
+    .refresh-lives-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 1.2rem;
+      right: auto;
+      border: 6px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.92);
+    }
+    .refresh-lives-btn:hover .refresh-lives-tooltip {
+      opacity: 1;
+    }
+    .refresh-lives-tooltip strong {
+      color: var(--accent-bright);
+    }
+
+    .refresh-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .refresh-modal.active { display: flex; }
+    .refresh-modal-inner {
+      position: relative;  /* So close button positions correctly */
+      background: var(--bg-card);
+      border: 1px solid var(--line-strong);
+      border-radius: 12px;
+      max-width: 620px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2.5rem 2rem 2rem;
+      direction: rtl;
+    }
+    .refresh-modal h2 {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 700;
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+      color: var(--accent-bright);
+    }
+    .refresh-modal .subtitle {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
+    .refresh-step {
+      background: var(--bg-soft);
+      border-right: 3px solid var(--accent);
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.8rem;
+      border-radius: 6px;
+    }
+    .refresh-step-num {
+      color: var(--accent);
+      font-weight: 800;
+      margin-left: 0.4rem;
+    }
+    .refresh-step-title {
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .refresh-step-body {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+    .refresh-step-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.7rem;
+      padding: 0.6rem 1.2rem;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 4px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .refresh-step-btn:hover {
+      background: var(--accent-bright);
+    }
+    .refresh-step-btn.copied {
+      background: #66BB6A;
+      color: #fff;
+    }
+    .refresh-modal-close {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      z-index: 10;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--line-strong);
+      color: var(--text-dim);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .refresh-modal-close:hover {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+      transform: rotate(90deg);
+    }
+    .refresh-modal-close:hover { color: var(--text); }
+    .refresh-file-input {
+      margin-top: 0.7rem;
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--bg);
+      border: 1px dashed var(--line-strong);
+      border-radius: 6px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+    .refresh-status {
+      margin-top: 1rem;
+      padding: 0.8rem 1rem;
+      background: var(--bg-soft);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      display: none;
+    }
+    .refresh-status.show { display: block; }
+    .refresh-status.success { color: #66BB6A; border-right: 3px solid #66BB6A; }
+    .refresh-status.error { color: #EF5350; border-right: 3px solid #EF5350; }
+
+  
+    /* === Auth gate ===
+       Behavior: site is visible behind, but clicks are blocked until logged in. */
+    #auth-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(15, 20, 36, 0.55);
+      backdrop-filter: blur(6px) saturate(0.7);
+      -webkit-backdrop-filter: blur(6px) saturate(0.7);
+      /* Hidden by default — JS decides to show after Firebase auth check.
+         This prevents the "flash" of login screen on refresh for logged-in users. */
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      direction: rtl;
+    }
+    #auth-overlay.visible { display: flex; }
+    #auth-overlay.hidden { display: none; }
+    .auth-card {
+      max-width: 440px;
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .auth-logo {
+      width: 56px;
+      height: 56px;
+      border: 2px solid var(--accent);
+      transform: rotate(45deg);
+      position: relative;
+      margin: 0 auto 1.5rem;
+    }
+    .auth-logo::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 2px solid var(--accent);
+    }
+    .auth-title {
+      font-family: 'Frank Ruhl Libre', serif;
+      font-weight: 900;
+      font-size: 1.6rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .auth-subtitle {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    .auth-google-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.85rem 1.6rem;
+      background: #fff;
+      color: #3c4043;
+      border: none;
+      border-radius: 4px;
+      font-family: inherit;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: all 0.2s;
+    }
+    .auth-google-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .auth-google-btn:active { transform: translateY(1px); }
+    .auth-google-icon {
+      width: 18px;
+      height: 18px;
+    }
+    .auth-status {
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      min-height: 1.2rem;
+    }
+    .auth-status.error { color: #ef5350; }
+    .auth-denied {
+      padding: 1rem;
+      background: rgba(239, 83, 80, 0.1);
+      border: 1px solid rgba(239, 83, 80, 0.3);
+      border-radius: 6px;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #ef5350;
+      line-height: 1.5;
+    }
+    .auth-denied-email {
+      font-family: monospace;
+      background: rgba(0,0,0,0.2);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+    }
+    .auth-signout-link {
+      display: inline-block;
+      margin-top: 1rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .auth-signout-link:hover { color: var(--accent-bright); }
+
+    /* When user is authenticated, the nav-cta button text/behavior changes
+       to "יציאה". No separate floating button — clean replacement. */
+    .nav-cta.is-signout {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--line-strong);
+    }
+    .nav-cta.is-signout:hover {
+      background: rgba(232, 168, 124, 0.08);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    /* Hide the old floating signout button entirely (kept for backward compat
+       but visually invisible) */
+    .auth-signout-btn { display: none !important; }
+
   </style>
+
+  <!-- Firebase Auth (same project as המחברת) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script>
+    firebase.initializeApp({
+      apiKey: "AIzaSyCIYvUtp9eoRAIeyOe9gQHPdgSNfxl8oHs",
+      authDomain: "my-notebook-b5229.firebaseapp.com",
+      projectId: "my-notebook-b5229",
+      storageBucket: "my-notebook-b5229.firebasestorage.app",
+      messagingSenderId: "409339902450",
+      appId: "1:409339902450:web:bbdfb6ab2960653403536b"
+    });
+  </script>
+
 </head>
 <body>
+
+  <!-- ============================================
+       AUTH GATE — same Firebase project as המחברת
+       To grant access to another user: add their
+       email to ALLOWED_EMAILS below.
+       ============================================ -->
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-logo"></div>
+      <h1 class="auth-title">קורס מסחר וויקוף</h1>
+      <p class="auth-subtitle">גישה למורשים בלבד.<br>התחבר באמצעות חשבון Google שלך.</p>
+      <button id="auth-google-btn" class="auth-google-btn">
+        <svg class="auth-google-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        <span>התחבר עם Google</span>
+      </button>
+      <div id="auth-status" class="auth-status"></div>
+    </div>
+  </div>
+
+  <button id="auth-signout-btn" class="auth-signout-btn">יציאה</button>
+
+  <script>
+    // ============================================
+    // EMAIL WHITELIST — only these can sign in with Google.
+    // Email+password users (created via the "+ הוסף משתמש" modal
+    // in the nav) are auto-approved since only admin can create them.
+    // ============================================
+    const ALLOWED_EMAILS = [
+      'gagula22@gmail.com',
+      // Add more authorized Google emails here:
+    ];
+
+    const ADMIN_EMAIL = 'gagula22@gmail.com';
+    const NOTIFY_EMAIL = 'gagula22@gmail.com';
+    // Web3Forms — sends email notifications with custom "from name"
+    const WEB3FORMS_ACCESS_KEY = '713bb3c2-1012-4296-a46c-b1c8b9c34eec';
+    const NOTIFY_FROM_NAME = 'מערכת הרשמה מאתר וויקוף שלי';  // sender display name in inbox
+
+    // Persisted hint to avoid auth-overlay flash on refresh.
+    // If a hint email is present and looks valid, we skip the overlay
+    // entirely until Firebase actually contradicts the hint.
+    const AUTH_HINT_KEY = 'auth_hint_email';
+    function setAuthHint(email) {
+      try { localStorage.setItem(AUTH_HINT_KEY, email); } catch(e) {}
+    }
+    function clearAuthHint() {
+      try { localStorage.removeItem(AUTH_HINT_KEY); } catch(e) {}
+    }
+    function getAuthHint() {
+      try { return localStorage.getItem(AUTH_HINT_KEY); } catch(e) { return null; }
+    }
+
+    // Send an email notification via Web3Forms (allows custom from_name).
+    async function notifyLogin(eventType, email, provider, success, errorMsg) {
+      if (email && email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        return;  // Don't notify on admin's own activity
+      }
+      try {
+        const ts = new Date().toLocaleString('he-IL');
+        let subject, lines;
+
+        if (eventType === 'USER_CREATED') {
+          const pwMatch = (errorMsg || '').match(/password: (.+)$/);
+          const isImport = /imported existing/.test(errorMsg || '');
+          if (isImport) {
+            subject = 'משתמש קיים יובא לרשימת הניהול';
+            lines = [
+              ['אירוע', 'יבוא משתמש קיים לניהול'],
+              ['אימייל', email],
+              ['מצב', 'המשתמש כבר היה קיים ב-Firebase. הוא נוסף לרשימת הניהול שלך בלי לשנות סיסמה.'],
+              ['מה אפשר לעשות', 'אם המשתמש שכח סיסמה — שלח לו קישור איפוס דרך "+ הוסף משתמש".'],
+              ['תאריך יבוא', ts],
+            ];
+          } else {
+            subject = 'משתמש חדש נוסף לאתר שלך';
+            lines = [
+              ['אירוע', 'משתמש חדש נוסף'],
+              ['אימייל', email],
+              ['סיסמה', pwMatch ? pwMatch[1] : '(לא ידועה)'],
+              ['תאריך יצירה', ts],
+              ['הערה', 'שלח למשתמש את הפרטים כדי שיוכל להתחבר'],
+            ];
+          }
+        } else if (eventType === 'LOGIN') {
+          subject = 'התחברות חדשה לאתר: ' + email;
+          lines = [
+            ['אירוע', 'התחברות מוצלחת'],
+            ['אימייל', email],
+            ['דרך התחברות', provider],
+            ['תאריך', ts],
+            ['דפדפן', navigator.userAgent.substring(0, 100)],
+          ];
+        } else if (eventType === 'LOGIN_FAILED') {
+          subject = 'ניסיון התחברות נכשל: ' + email;
+          lines = [
+            ['אירוע', 'ניסיון התחברות נכשל'],
+            ['אימייל', email],
+            ['דרך התחברות', provider],
+            ['שגיאה', errorMsg || ''],
+            ['תאריך', ts],
+          ];
+        } else if (eventType === 'LOGIN_DENIED' || eventType === 'LOGIN_BLOCKED') {
+          subject = eventType === 'LOGIN_BLOCKED'
+            ? 'התחברות נחסמה (משתמש חסום): ' + email
+            : 'התחברות נדחתה (לא מורשה): ' + email;
+          lines = [
+            ['אירוע', eventType === 'LOGIN_BLOCKED' ? 'משתמש חסום ניסה להיכנס' : 'מייל לא מורשה ניסה להיכנס'],
+            ['אימייל', email],
+            ['דרך התחברות', provider],
+            ['תאריך', ts],
+          ];
+        } else {
+          subject = '[קורס וויקוף] ' + eventType + ': ' + (email || 'unknown');
+          lines = [
+            ['event', eventType],
+            ['email', email || '(none)'],
+            ['provider', provider || '(unknown)'],
+            ['success', success ? 'YES' : 'NO'],
+            ['error', errorMsg || ''],
+            ['timestamp', ts],
+          ];
+        }
+
+        // Build a nicely-formatted message body
+        const message = lines.map(([k, v]) => k + ': ' + v).join('\n');
+
+        // Build the Web3Forms payload
+        const payload = {
+          access_key: WEB3FORMS_ACCESS_KEY,
+          subject: subject,
+          from_name: NOTIFY_FROM_NAME,
+          message: message,
+        };
+        // Also include each line as a separate field (so they show in the
+        // dashboard formatted nicely)
+        for (const [k, v] of lines) payload[k] = v;
+
+        await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        console.warn('Failed to notify:', e);
+      }
+    }
+
+    (function setupAuth() {
+      const overlay = document.getElementById('auth-overlay');
+      const googleBtn = document.getElementById('auth-google-btn');
+      const status = document.getElementById('auth-status');
+      const auth = firebase.auth();
+
+      // Use LOCAL persistence so user stays logged in across browser sessions
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+      // Lazy-fetch nav-cta (DOM not parsed when this script runs)
+      const ORIGINAL_CTA_TEXT = 'להרשמה';
+      const ORIGINAL_CTA_HREF = '#pricing';
+      function setNavCtaAsSignout(email) {
+        const navCta = document.querySelector('.nav-cta');
+        if (!navCta) return;
+        navCta.textContent = 'יציאה';
+        navCta.setAttribute('href', '#');
+        navCta.title = 'מחובר כ: ' + email + ' — לחץ ליציאה';
+        navCta.classList.add('is-signout');
+        navCta.onclick = (e) => { e.preventDefault(); auth.signOut(); };
+      }
+      function setNavCtaAsSignup() {
+        const navCta = document.querySelector('.nav-cta');
+        if (!navCta) return;
+        navCta.textContent = ORIGINAL_CTA_TEXT;
+        navCta.setAttribute('href', ORIGINAL_CTA_HREF);
+        navCta.title = '';
+        navCta.classList.remove('is-signout');
+        navCta.onclick = null;
+      }
+
+      // Admin-only: "+ הוסף משתמש" button — injected into the nav after DOM ready
+      function injectAddUserButton() {
+        if (document.getElementById('admin-add-user-btn')) return;
+        const navLinks = document.querySelector('.nav-links');
+        if (!navLinks) return;
+
+        // "+ הוסף משתמש"
+        const li1 = document.createElement('li');
+        const btn1 = document.createElement('a');
+        btn1.id = 'admin-add-user-btn';
+        btn1.href = '#';
+        btn1.textContent = '+ הוסף משתמש';
+        btn1.style.color = '#26A69A';
+        btn1.style.fontWeight = '600';
+        btn1.onclick = (e) => { e.preventDefault(); openAddUserModal(); };
+        li1.appendChild(btn1);
+        navLinks.appendChild(li1);
+
+        // "ניהול משתמשים"
+        const li2 = document.createElement('li');
+        const btn2 = document.createElement('a');
+        btn2.id = 'admin-manage-users-btn';
+        btn2.href = '#';
+        btn2.textContent = '⚙ ניהול משתמשים';
+        btn2.style.color = '#2962FF';
+        btn2.style.fontWeight = '600';
+        btn2.onclick = (e) => { e.preventDefault(); openManageUsersModal(); };
+        li2.appendChild(btn2);
+        navLinks.appendChild(li2);
+      }
+
+      function removeAddUserButton() {
+        const btn = document.getElementById('admin-add-user-btn');
+        if (btn) btn.parentElement.remove();
+        const btn2 = document.getElementById('admin-manage-users-btn');
+        if (btn2) btn2.parentElement.remove();
+      }
+
+      // ---------- Manage users modal ----------
+      async function openManageUsersModal() {
+        const modalHtml =
+          '<div id="manage-users-modal" class="refresh-modal active">' +
+          '<div class="refresh-modal-inner" style="max-width:680px">' +
+            '<button class="refresh-modal-close" id="manage-users-close">✕</button>' +
+            '<h2>ניהול משתמשים</h2>' +
+            '<div class="subtitle">' +
+              'רשימת כל המשתמשים שיצרת לקורס. אפשר לחסום או לפתוח גישה לכל אחד.' +
+            '</div>' +
+            '<div id="users-list">' +
+              '<div style="text-align:center;padding:2rem;color:var(--text-dim)">טוען רשימה…</div>' +
+            '</div>' +
+          '</div></div>';
+        const wrap = document.createElement('div');
+        wrap.innerHTML = modalHtml;
+        document.body.appendChild(wrap.firstChild);
+
+        const modal = document.getElementById('manage-users-modal');
+        const close = () => modal.remove();
+        document.getElementById('manage-users-close').onclick = close;
+        modal.onclick = (e) => { if (e.target === modal) close(); };
+
+        await refreshUsersList();
+      }
+
+      async function refreshUsersList() {
+        const listEl = document.getElementById('users-list');
+        if (!listEl) return;
+        try {
+          const snap = await firebase.firestore().collection('course_users')
+            .orderBy('createdAt', 'desc').get();
+          if (snap.empty) {
+            listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim)">' +
+              'עדיין לא יצרת משתמשים. לחץ על "+ הוסף משתמש".</div>';
+            return;
+          }
+
+          let html = '<div style="display:flex;flex-direction:column;gap:0.5rem">';
+          snap.forEach(doc => {
+            const u = doc.data();
+            const blocked = u.blocked === true;
+            const created = u.createdAt && u.createdAt.toDate
+                          ? u.createdAt.toDate().toLocaleString('he-IL', {dateStyle:'short', timeStyle:'short'})
+                          : '—';
+            const pw = u.lastKnownPassword || '';
+            const escapedPw = pw.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            html +=
+              '<div data-uid="' + doc.id + '" style="display:flex;align-items:center;justify-content:space-between;' +
+              'padding:0.7rem 1rem;background:var(--bg-soft);border-radius:6px;gap:0.8rem;flex-wrap:wrap;transition:opacity 0.3s,transform 0.3s">' +
+                '<div style="flex:1;min-width:200px;text-align:right">' +
+                  '<div style="font-family:monospace;direction:ltr;text-align:left;font-weight:600">' + u.email + '</div>' +
+                  '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem">נוצר: ' + created + '</div>' +
+                  (pw
+                    ? '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;display:flex;align-items:center;gap:0.4rem;direction:ltr;justify-content:flex-end">' +
+                        '<span class="pw-reveal" data-pw="' + escapedPw + '" data-state="hidden" ' +
+                        'style="cursor:pointer;font-size:1rem;user-select:none;line-height:1" title="הצג/הסתר סיסמה">👁</span>' +
+                        '<span class="pw-display" style="font-family:monospace;font-weight:600;letter-spacing:0.05em">' +
+                        '•'.repeat(Math.min(pw.length, 14)) + '</span>' +
+                        '<span style="opacity:0.6">Password:</span>' +
+                      '</div>'
+                    : '<div style="font-size:0.7rem;color:var(--text-dim);margin-top:0.3rem;font-style:italic;direction:ltr;text-align:left">(הסיסמה לא ידועה — משתמש מיובא)</div>'
+                  ) +
+                '</div>' +
+                '<div style="display:flex;gap:0.4rem;align-items:center">' +
+                  (blocked
+                    ? '<span style="font-size:0.8rem;color:#ef5350;font-weight:600">🚫 חסום</span>' +
+                      '<button class="user-action-btn" data-action="unblock" data-uid="' + doc.id + '" data-email="' + u.email + '" ' +
+                        'style="padding:0.4rem 0.8rem;background:#26A69A;color:white;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:0.8rem">' +
+                        'פתח גישה' +
+                      '</button>'
+                    : '<span style="font-size:0.8rem;color:#26A69A;font-weight:600">✓ פעיל</span>' +
+                      '<button class="user-action-btn" data-action="block" data-uid="' + doc.id + '" data-email="' + u.email + '" ' +
+                        'style="padding:0.4rem 0.8rem;background:#ef5350;color:white;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:0.8rem">' +
+                        '🚫 חסום' +
+                      '</button>'
+                  ) +
+                  '<button class="user-action-btn" data-action="delete" data-uid="' + doc.id + '" data-email="' + u.email + '" ' +
+                    'style="padding:0.4rem 0.6rem;background:#5D606B;color:white;border:none;border-radius:4px;cursor:pointer;font-family:inherit;font-size:0.8rem" ' +
+                    'title="מחק מהרשימה (וחסום מגישה לאתר)">' +
+                    '🗑' +
+                  '</button>' +
+                  '<a href="https://console.firebase.google.com/u/0/project/my-notebook-b5229/authentication/users" ' +
+                    'target="_blank" rel="noopener" ' +
+                    'style="padding:0.4rem 0.5rem;background:transparent;color:var(--text-dim);border:1px solid var(--line-strong);border-radius:4px;cursor:pointer;font-family:inherit;font-size:0.85rem;text-decoration:none;display:inline-flex;align-items:center;line-height:1" ' +
+                    'title="פתח Firebase Console למחיקה מלאה גם מ-Authentication">' +
+                    '🔗' +
+                  '</a>' +
+                '</div>' +
+              '</div>';
+          });
+          html += '</div>';
+          listEl.innerHTML = html;
+
+          // Password reveal toggle
+          listEl.querySelectorAll('.pw-reveal').forEach(eye => {
+            eye.addEventListener('click', () => {
+              const pw = eye.getAttribute('data-pw');
+              const state = eye.getAttribute('data-state');
+              const display = eye.parentElement.querySelector('.pw-display');
+              if (state === 'hidden') {
+                display.textContent = pw;
+                eye.textContent = '🙈';
+                eye.setAttribute('data-state', 'shown');
+              } else {
+                display.textContent = '•'.repeat(Math.min(pw.length, 14));
+                eye.textContent = '👁';
+                eye.setAttribute('data-state', 'hidden');
+              }
+            });
+          });
+
+          listEl.querySelectorAll('.user-action-btn').forEach(btn => {
+            btn.onclick = async () => {
+              const action = btn.getAttribute('data-action');
+              const uid = btn.getAttribute('data-uid');
+              const email = btn.getAttribute('data-email');
+              const db = firebase.firestore();
+              const emailKey = email.toLowerCase();
+
+              // Delete = remove from list + block from logging in (silently)
+              if (action === 'delete') {
+                const ok = confirm('למחוק את ' + email + '?');
+                if (!ok) return;
+
+                // Optimistic UI: fade out the row immediately
+                const row = btn.closest('[data-uid]');
+                if (row) {
+                  row.style.opacity = '0';
+                  row.style.transform = 'translateX(-20px)';
+                }
+
+                // Do Firestore writes in parallel (faster), in background
+                try {
+                  await Promise.all([
+                    db.collection('course_users').doc(uid).delete(),
+                    db.collection('course_blocks').doc(emailKey).set({
+                      email: emailKey,
+                      blockedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                      blockedBy: auth.currentUser.email,
+                      reason: 'deleted',
+                    }),
+                  ]);
+                  // Remove the row from the DOM (no full re-fetch needed = faster, no flicker)
+                  if (row) row.remove();
+                  // If list is now empty, show empty state
+                  if (listEl.querySelectorAll('[data-uid]').length === 0) {
+                    listEl.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-dim)">' +
+                      'עדיין לא יצרת משתמשים. לחץ על "+ הוסף משתמש".</div>';
+                  }
+                } catch (e) {
+                  // Restore row on error (silent — no alert)
+                  if (row) {
+                    row.style.opacity = '';
+                    row.style.transform = '';
+                  }
+                  console.warn('Delete failed:', e.message);
+                }
+                return;
+              }
+
+              if (!confirm((action === 'block' ? 'לחסום' : 'לפתוח גישה ל') + ' ' + email + '?')) return;
+              const originalLabel = btn.textContent;
+              btn.disabled = true;
+              try {
+                if (action === 'block') {
+                  await Promise.all([
+                    db.collection('course_users').doc(uid).update({blocked: true}),
+                    db.collection('course_blocks').doc(emailKey).set({
+                      email: emailKey,
+                      blockedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                      blockedBy: auth.currentUser.email,
+                    }),
+                  ]);
+                } else {
+                  await Promise.all([
+                    db.collection('course_users').doc(uid).update({blocked: false}),
+                    db.collection('course_blocks').doc(emailKey).delete(),
+                  ]);
+                }
+                await refreshUsersList();
+              } catch (e) {
+                console.warn('Action failed:', e.message);
+                btn.disabled = false;
+                btn.textContent = originalLabel;
+              }
+            };
+          });
+        } catch (e) {
+          listEl.innerHTML = '<div style="color:#ef5350;padding:1rem;text-align:center">' +
+            'שגיאה בטעינת הרשימה: ' + e.message + '</div>';
+        }
+      }
+
+      function showStatus(msg, isError) {
+        if (!status) return;
+        status.textContent = msg;
+        status.className = 'auth-status' + (isError ? ' error' : '');
+      }
+
+      function showDeniedMessage(email, blocked) {
+        const card = document.querySelector('.auth-card');
+        if (!card) return;
+        const reason = blocked
+          ? 'הגישה שלך נחסמה על ידי המנהל.'
+          : 'החשבון שלך לא מורשה לגשת לאתר זה.';
+        card.innerHTML =
+          '<div class="auth-logo"></div>' +
+          '<h1 class="auth-title">גישה נדחתה</h1>' +
+          '<p class="auth-subtitle">' + reason + '</p>' +
+          '<div class="auth-denied">' +
+            'מחובר כעת כ: <span class="auth-denied-email">' + email + '</span><br>' +
+            (blocked
+              ? 'אם זו טעות — צור קשר עם המנהל.'
+              : 'אם זה אתה — בקש מהמנהל להוסיף את המייל שלך לרשימת המורשים.') +
+          '</div>' +
+          '<a class="auth-signout-link" id="denied-signout">התנתק ונסה חשבון אחר ↗</a>';
+        const so = document.getElementById('denied-signout');
+        if (so) so.addEventListener('click', () => auth.signOut());
+      }
+
+      // ---------- "Create user" modal logic (admin only) ----------
+      function openAddUserModal() {
+        const html =
+          '<div id="add-user-modal" class="refresh-modal active">' +
+          '<div class="refresh-modal-inner" style="max-width:480px">' +
+            '<button class="refresh-modal-close" id="add-user-close">✕</button>' +
+            '<h2>הוסף משתמש חדש</h2>' +
+            '<div class="subtitle">' +
+              'הסיסמה תיווצר על-ידיך ותישלח למשתמש החדש.<br>' +
+              'הוא יוכל להתחבר עם כתובת המייל והסיסמה שתיתן לו.' +
+            '</div>' +
+            '<form id="add-user-form" autocomplete="off">' +
+              '<div style="text-align:right;margin-bottom:1rem">' +
+                '<label style="display:block;color:var(--text-dim);font-size:0.85rem;margin-bottom:0.4rem">אימייל</label>' +
+                '<input type="email" id="new-user-email" required dir="ltr" ' +
+                'style="width:100%;padding:0.7rem 0.9rem;background:var(--bg);border:1px solid var(--line-strong);' +
+                'border-radius:4px;color:var(--text);font-family:inherit;font-size:0.95rem">' +
+              '</div>' +
+              '<div style="text-align:right;margin-bottom:1rem">' +
+                '<label style="display:block;color:var(--text-dim);font-size:0.85rem;margin-bottom:0.4rem">סיסמה (לפחות 6 תווים)</label>' +
+                '<input type="text" id="new-user-password" required minlength="6" dir="ltr" ' +
+                'style="width:100%;padding:0.7rem 0.9rem;background:var(--bg);border:1px solid var(--line-strong);' +
+                'border-radius:4px;color:var(--text);font-family:inherit;font-size:0.95rem">' +
+                '<a id="gen-password" style="display:inline-block;margin-top:0.4rem;font-size:0.8rem;color:var(--accent);cursor:pointer">⚡ הגרל סיסמה חזקה</a>' +
+              '</div>' +
+              '<button type="submit" class="refresh-step-btn" style="width:100%;justify-content:center;padding:0.8rem">' +
+                'צור משתמש' +
+              '</button>' +
+              '<div id="add-user-status" class="refresh-status"></div>' +
+            '</form>' +
+          '</div></div>';
+
+        const wrap = document.createElement('div');
+        wrap.innerHTML = html;
+        document.body.appendChild(wrap.firstChild);
+
+        const modal = document.getElementById('add-user-modal');
+        const close = () => modal.remove();
+        document.getElementById('add-user-close').onclick = close;
+        modal.onclick = (e) => { if (e.target === modal) close(); };
+
+        document.getElementById('gen-password').onclick = () => {
+          // Generate strong random password
+          const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+          let pw = '';
+          const arr = new Uint32Array(14);
+          crypto.getRandomValues(arr);
+          for (const n of arr) pw += chars[n % chars.length];
+          document.getElementById('new-user-password').value = pw;
+        };
+
+        document.getElementById('add-user-form').onsubmit = async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('new-user-email').value.trim().toLowerCase();
+          const pw = document.getElementById('new-user-password').value;
+          const statusEl = document.getElementById('add-user-status');
+          statusEl.className = 'refresh-status show';
+          statusEl.textContent = 'יוצר משתמש...';
+
+          // Helper: write user record to Firestore (uses email as doc ID
+          // when UID is unknown, so admin can still manage them)
+          async function saveUserRecord(docId, withPwHint) {
+            try {
+              await firebase.firestore().collection('course_users').doc(docId).set({
+                email: email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                createdBy: auth.currentUser.email,
+                blocked: false,
+                lastKnownPassword: withPwHint ? pw : null,
+              });
+            } catch (e) { console.warn('Failed to save user record:', e); }
+          }
+
+          try {
+            // Use SECONDARY Firebase app to create user without affecting admin's session
+            let secondary;
+            try {
+              secondary = firebase.app('secondary');
+            } catch (_) {
+              secondary = firebase.initializeApp(firebase.app().options, 'secondary');
+            }
+
+            let newUid;
+            try {
+              const cred = await secondary.auth().createUserWithEmailAndPassword(email, pw);
+              newUid = cred.user.uid;
+              await secondary.auth().signOut();
+            } catch (createErr) {
+              // Special handling: user already exists in Firebase Auth
+              if (createErr.code === 'auth/email-already-in-use') {
+                statusEl.className = 'refresh-status show error';
+                statusEl.innerHTML =
+                  '<div style="margin-bottom:0.8rem">⚠ המשתמש <strong>' + email + '</strong> כבר קיים ב-Firebase.</div>' +
+                  '<div style="margin-bottom:0.8rem;font-size:0.85rem">' +
+                    'אפשר להוסיף אותו לרשימת הניהול שלך (בלי לשנות סיסמה) ' +
+                    'או לאפס את הסיסמה ולשלוח לו אימייל לאיפוס.' +
+                  '</div>' +
+                  '<div style="display:flex;gap:0.5rem;flex-wrap:wrap">' +
+                    '<button id="import-existing" class="refresh-step-btn" style="flex:1;min-width:130px;justify-content:center;padding:0.6rem;background:#26A69A">' +
+                      'הוסף לרשימה (קיים)' +
+                    '</button>' +
+                    '<button id="reset-existing-pw" class="refresh-step-btn" style="flex:1;min-width:130px;justify-content:center;padding:0.6rem;background:#FFA726">' +
+                      'שלח קישור איפוס סיסמה' +
+                    '</button>' +
+                  '</div>';
+
+                document.getElementById('import-existing').onclick = async () => {
+                  await saveUserRecord('imported_' + email.replace(/[^a-zA-Z0-9]/g, '_'), false);
+                  notifyLogin('USER_CREATED', email, 'password', true,
+                              'imported existing user (no new password set)');
+                  statusEl.className = 'refresh-status show success';
+                  statusEl.innerHTML = '✓ ' + email + ' נוסף לרשימת הניהול. ' +
+                    'תוכל לחסום או לפתוח גישה דרך "ניהול משתמשים".';
+                };
+
+                document.getElementById('reset-existing-pw').onclick = async () => {
+                  try {
+                    await auth.sendPasswordResetEmail(email);
+                    statusEl.className = 'refresh-status show success';
+                    statusEl.textContent = '✓ נשלח קישור איפוס סיסמה ל-' + email +
+                      '. בקש מהמשתמש לבדוק את המייל שלו.';
+                  } catch (e) {
+                    statusEl.className = 'refresh-status show error';
+                    statusEl.textContent = 'שגיאה: ' + e.message;
+                  }
+                };
+                return;  // stop the normal flow
+              }
+              throw createErr;  // other errors propagate
+            }
+
+            // Normal flow: new user created successfully
+            await saveUserRecord(newUid, true);
+
+            // Notify admin (formsubmit) that a new user was created
+            notifyLogin('USER_CREATED', email, 'password', true,
+                        'created by admin with password: ' + pw);
+
+            // Build a shareable message (used by Copy/WhatsApp/Email buttons)
+            const siteUrl = location.origin + location.pathname;
+            const shareMsg =
+              'היי! נפתח לך חשבון לאתר קורס וויקוף.\n\n' +
+              'כתובת האתר: ' + siteUrl + '\n\n' +
+              'אימייל: ' + email + '\n' +
+              'סיסמה: ' + pw + '\n\n' +
+              'בכניסה לאתר, גלול מטה ל"או התחבר עם אימייל וסיסמה" והזן את הפרטים.';
+
+            statusEl.className = 'refresh-status show success';
+            statusEl.innerHTML =
+              '<div style="font-size:1rem;margin-bottom:0.6rem">✓ המשתמש נוצר בהצלחה!</div>' +
+              '<div style="padding:0.7rem;background:rgba(0,0,0,0.3);border-radius:4px;font-family:monospace;direction:ltr;text-align:left;margin-bottom:0.8rem">' +
+                'Email: <strong>' + email + '</strong><br>' +
+                'Password: <strong>' + pw + '</strong>' +
+              '</div>' +
+              '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;justify-content:center">' +
+                '<button id="share-copy" class="refresh-step-btn" style="flex:1;min-width:120px;justify-content:center;padding:0.6rem">' +
+                  '⎘ העתק' +
+                '</button>' +
+                '<a id="share-whatsapp" href="https://wa.me/?text=' + encodeURIComponent(shareMsg) + '" target="_blank" rel="noopener" class="refresh-step-btn" style="flex:1;min-width:120px;justify-content:center;padding:0.6rem;background:#25D366">' +
+                  '💬 WhatsApp' +
+                '</a>' +
+                '<a id="share-email" href="https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + encodeURIComponent('פרטי כניסה - קורס וויקוף') + '&body=' + encodeURIComponent(shareMsg) + '" target="_blank" rel="noopener" class="refresh-step-btn" style="flex:1;min-width:120px;justify-content:center;padding:0.6rem;background:#D44638">' +
+                  '✉ Gmail' +
+                '</a>' +
+              '</div>';
+
+            document.getElementById('share-copy').onclick = async (ev) => {
+              ev.preventDefault();
+              try {
+                await navigator.clipboard.writeText(shareMsg);
+                ev.target.textContent = '✓ הועתק!';
+                setTimeout(() => { ev.target.textContent = '⎘ העתק'; }, 2000);
+              } catch (e) {
+                alert('שגיאה בהעתקה: ' + e.message);
+              }
+            };
+
+            document.getElementById('add-user-form').querySelector('button[type=submit]').disabled = true;
+          } catch (err) {
+            statusEl.className = 'refresh-status show error';
+            statusEl.textContent = 'שגיאה: ' + (err.message || err.code || 'unknown');
+          }
+        };
+      }
+
+      // ---------- Apply auth hint immediately (prevent flash) ----------
+      const hint = getAuthHint();
+      // If a hint is present and email is whitelisted OR could be a created
+      // password user, optimistically hide overlay. Firebase will correct
+      // shortly if hint is wrong.
+      const hintIsValid = hint && (
+        ALLOWED_EMAILS.includes(hint.toLowerCase()) ||
+        hint.includes('@')  // any email — assume created-user is OK
+      );
+      if (!hintIsValid) {
+        overlay.classList.add('visible');  // show login overlay
+      }
+
+      // ---------- Email/password login form ----------
+      function showPasswordLogin() {
+        const card = document.querySelector('.auth-card');
+        if (!card || document.getElementById('pw-login-form')) return;
+        const div = document.createElement('div');
+        div.innerHTML =
+          '<div style="margin-top:1.5rem;border-top:1px solid var(--line);padding-top:1rem">' +
+            '<div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:0.8rem">או התחבר עם אימייל וסיסמה:</div>' +
+            '<form id="pw-login-form" autocomplete="off">' +
+              '<input type="email" id="pw-email" placeholder="אימייל" required dir="ltr" ' +
+              'style="width:100%;padding:0.6rem 0.8rem;background:var(--bg);border:1px solid var(--line-strong);' +
+              'border-radius:4px;color:var(--text);font-family:inherit;font-size:0.9rem;margin-bottom:0.5rem">' +
+              '<input type="password" id="pw-password" placeholder="סיסמה" required dir="ltr" ' +
+              'style="width:100%;padding:0.6rem 0.8rem;background:var(--bg);border:1px solid var(--line-strong);' +
+              'border-radius:4px;color:var(--text);font-family:inherit;font-size:0.9rem;margin-bottom:0.5rem">' +
+              '<button type="submit" style="width:100%;padding:0.6rem;background:var(--accent);color:var(--bg);' +
+              'border:none;border-radius:4px;font-weight:700;cursor:pointer">התחבר</button>' +
+            '</form>' +
+          '</div>';
+        card.appendChild(div);
+        document.getElementById('pw-login-form').onsubmit = async (e) => {
+          e.preventDefault();
+          const email = document.getElementById('pw-email').value.trim();
+          const pw = document.getElementById('pw-password').value;
+          showStatus('מתחבר…');
+          try {
+            await auth.signInWithEmailAndPassword(email, pw);
+          } catch (err) {
+            showStatus('שגיאה: ' + err.message, true);
+            notifyLogin('LOGIN_FAILED', email, 'password', false, err.message);
+          }
+        };
+      }
+
+      if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+          showStatus('מתחבר…');
+          try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({ prompt: 'select_account' });
+            await auth.signInWithPopup(provider);
+          } catch (err) {
+            if (err.code === 'auth/popup-closed-by-user') {
+              showStatus('');
+            } else {
+              showStatus('שגיאה בהתחברות: ' + err.message, true);
+              notifyLogin('LOGIN_FAILED', '(google attempt)', 'google', false, err.message);
+            }
+          }
+        });
+      }
+
+      // Show email/password login alongside Google sign-in
+      setTimeout(showPasswordLogin, 100);
+
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          clearAuthHint();
+          overlay.classList.add('visible');
+          overlay.classList.remove('hidden');
+          document.body.classList.remove('user-authed');
+          removeAddUserButton();
+          setNavCtaAsSignup();
+          // Reset card if it was changed to denied
+          if (!document.getElementById('auth-google-btn')) location.reload();
+          return;
+        }
+
+        const email = (user.email || '').toLowerCase();
+        const provider = user.providerData?.[0]?.providerId || 'unknown';
+
+        // Approval logic:
+        // - Google sign-in: must be in ALLOWED_EMAILS
+        // - Email/password sign-in: auto-approved (admin created)
+        // - BUT check blocklist for both
+        let isBlocked = false;
+        if (email !== ADMIN_EMAIL.toLowerCase()) {
+          try {
+            const blockDoc = await firebase.firestore()
+              .collection('course_blocks').doc(email).get();
+            isBlocked = blockDoc.exists;
+          } catch (_) { /* if firestore unavailable, allow */ }
+        }
+
+        const isApproved = !isBlocked &&
+          (provider === 'password' || ALLOWED_EMAILS.includes(email));
+
+        if (isApproved) {
+          setAuthHint(email);
+          overlay.classList.remove('visible');
+          overlay.classList.add('hidden');
+          document.body.classList.add('user-authed');
+          setNavCtaAsSignout(email);
+
+          // Inject admin "+ הוסף משתמש" button only for admin
+          if (email === ADMIN_EMAIL.toLowerCase()) {
+            // Wait for DOM if needed
+            if (document.querySelector('.nav-links')) {
+              injectAddUserButton();
+            } else {
+              document.addEventListener('DOMContentLoaded', injectAddUserButton);
+            }
+          } else {
+            removeAddUserButton();
+          }
+
+          // Notify admin of non-admin login
+          notifyLogin('LOGIN', email, provider, true, '');
+        } else {
+          clearAuthHint();
+          overlay.classList.add('visible');
+          overlay.classList.remove('hidden');
+          showDeniedMessage(email, isBlocked);
+          document.body.classList.remove('user-authed');
+          removeAddUserButton();
+          // After signing out (denied), also clear the auth hint
+          setTimeout(() => auth.signOut(), 0);
+          notifyLogin(isBlocked ? 'LOGIN_BLOCKED' : 'LOGIN_DENIED',
+                     email, provider, false,
+                     isBlocked ? 'user is in blocklist' : 'not in whitelist');
+        }
+      });
+
+      // Re-apply on DOMContentLoaded too (in case auth fired before <nav> existed)
+      document.addEventListener('DOMContentLoaded', () => {
+        const u = auth.currentUser;
+        if (!u) return;
+        const email = (u.email || '').toLowerCase();
+        const provider = u.providerData?.[0]?.providerId || 'unknown';
+        if (provider === 'password' || ALLOWED_EMAILS.includes(email)) {
+          setNavCtaAsSignout(email);
+          if (email === ADMIN_EMAIL.toLowerCase()) injectAddUserButton();
+        }
+      });
+    })();
+  </script>
+
 
 <canvas id="bg-canvas"></canvas>
 
 <nav id="nav">
   <div class="logo">
     <span class="logo-mark"></span>
-    מסע התלת־ממד
+    צעד אחרי צעד
   </div>
   <ul class="nav-links">
     <li><a href="#learn">מה תלמדו</a></li>
@@ -1572,6 +3131,7 @@
     <li><a href="#instructor">המרצה</a></li>
     <li><a href="#pricing">מחיר</a></li>
     <li><a href="#faq">שאלות</a></li>
+    <li><a href="#lessons" class="nav-link-special open-lessons">שיעורים</a></li>
     <li><a href="#notebook" class="nav-link-special open-notebook">מחברת שלי</a></li>
   </ul>
   <a href="#pricing" class="nav-cta">להרשמה</a>
@@ -1599,16 +3159,16 @@
   <section class="hero">
     <div class="hero-eyebrow">קורס דיגיטלי · 2026</div>
     <h1 class="hero-title">
-      אל תלמדו WebGL.
-      <span class="line-2">תלמדו ליצור <span class="accent">עולמות.</span></span>
+      מסחר לפי
+      <span class="line-2">שיטת <span class="accent">וויקוף.</span></span>
     </h1>
     <p class="hero-subtitle">
-      המסע המקיף ביותר בעברית ללימוד פיתוח חוויות תלת־ממד באינטרנט.
-      מהיסודות של Three.js ועד שייידרים מתקדמים ב־GLSL — הכל בעברית, מאפס למקצוען.
+      ללמוד לסחור צעד אחרי צעד.
+      קורס מסחר מקיף בעברית — מהיסודות ועד מסחר לייב יומי. ניהול סיכונים, פסיכולוגיה, ניתוח שוק ומעקב אחרי הכסף.
     </p>
     <div class="hero-cta-group">
       <a href="#pricing" class="btn-primary">
-        <span>התחילו את המסע ←</span>
+        <span>התחילו ללמוד ←</span>
       </a>
       <a href="#" class="btn-secondary">
         <span class="play-icon">▶</span>
@@ -1618,16 +3178,16 @@
 
     <div class="hero-stats">
       <div class="hero-stat">
-        <div class="hero-stat-num">94<span style="color:var(--accent)">+</span></div>
-        <div class="hero-stat-label">שעות וידאו</div>
+        <div class="hero-stat-num">159<span style="color:var(--accent)">+</span></div>
+        <div class="hero-stat-label">שיעורים מוקלטים</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-num">47</div>
-        <div class="hero-stat-label">פרקים מעמיקים</div>
+        <div class="hero-stat-num">14</div>
+        <div class="hero-stat-label">קטגוריות לימוד</div>
       </div>
       <div class="hero-stat">
-        <div class="hero-stat-num">12K<span style="color:var(--accent)">+</span></div>
-        <div class="hero-stat-label">תלמידים</div>
+        <div class="hero-stat-num">לייב</div>
+        <div class="hero-stat-label">סדנאות יומיות</div>
       </div>
     </div>
 
@@ -1639,11 +3199,11 @@
     <div class="section-header reveal">
       <div class="section-eyebrow">מה תלמדו</div>
       <h2 class="section-title">
-        כל מה שצריך לבנות אתרים<br>
-        <span class="accent">שאחרים רק חולמים עליהם.</span>
+        כל מה שצריך כדי לסחור<br>
+        <span class="accent">בביטחון מלא.</span>
       </h2>
       <p class="section-lead">
-        שמונה תחומי ידע מרכזיים שהופכים אתכם ממפתחי web רגילים ליוצרי חוויות אינטראקטיביות מהשורה הראשונה.
+        שמונה תחומי ידע מרכזיים שהופכים אתכם מסוחרים מתחילים לסוחרים שיודעים מה הם עושים בכל רגע.
       </p>
     </div>
 
@@ -1651,87 +3211,92 @@
       <div class="learn-card">
         <div class="learn-num">01</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M24 4 L42 14 L42 34 L24 44 L6 34 L6 14 Z"/>
-          <path d="M24 4 L24 24 L42 14 M24 24 L6 14 M24 24 L24 44"/>
+          <path d="M6 36 L18 24 L26 30 L42 12"/>
+          <path d="M30 12 L42 12 L42 24"/>
+          <circle cx="6" cy="36" r="2" fill="currentColor"/>
+          <circle cx="18" cy="24" r="2" fill="currentColor"/>
+          <circle cx="26" cy="30" r="2" fill="currentColor"/>
         </svg>
-        <h3>שליטה מלאה ב־Three.js</h3>
-        <p>מהבסיס ועד המתקדם — סצנות, מצלמות, רנדור, גיאומטריות וחומרים. תבינו לעומק איך הכל עובד.</p>
+        <h3>שיטת וויקוף</h3>
+        <p>פאזות הצבירה והחלוקה, קריאה נכונה של מבנה השוק, וזיהוי הרגעים שבהם הכסף הגדול נכנס ויוצא.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">02</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="24" cy="24" r="18"/>
-          <path d="M6 24 Q24 8 42 24 Q24 40 6 24"/>
-          <circle cx="24" cy="24" r="3" fill="currentColor"/>
+          <rect x="8" y="20" width="6" height="20"/>
+          <rect x="18" y="12" width="6" height="28"/>
+          <rect x="28" y="24" width="6" height="16"/>
+          <rect x="38" y="8" width="2" height="32"/>
         </svg>
-        <h3>שייידרים ב־GLSL</h3>
-        <p>הקסם שמאחורי הקלעים. שייידר vertex ו־fragment — ותכתבו אפקטים ויזואליים מהממים מאפס.</p>
+        <h3>ניתוח ווליום</h3>
+        <p>למה ווליום הוא הסוד הגדול של המסחר, איך לקרוא אותו נכון, ואיך לזהות הצטברויות לפני התנועה.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">03</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M8 36 Q16 20 24 28 Q32 36 40 12"/>
-          <circle cx="8" cy="36" r="2" fill="currentColor"/>
-          <circle cx="40" cy="12" r="2" fill="currentColor"/>
+          <circle cx="24" cy="24" r="18"/>
+          <path d="M24 12 L24 24 L32 28"/>
+          <circle cx="24" cy="24" r="2" fill="currentColor"/>
         </svg>
-        <h3>אנימציות מורכבות</h3>
-        <p>GSAP, אנימציות מבוססות גלילה, מעברים חלקים בין סצנות, ותזמון מדויק שמרגיש קולנועי.</p>
+        <h3>ניהול סיכונים</h3>
+        <p>סטופ לוס, יחס סיכון/סיכוי, ניהול עסקאות פתוחות וצמצום הפסדים — מה שמפריד בין סוחר לרוכל.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">04</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="8" y="14" width="32" height="20" rx="2"/>
-          <path d="M8 22 L40 22 M16 14 L16 6 M32 14 L32 6"/>
-          <circle cx="24" cy="28" r="2" fill="currentColor"/>
+          <circle cx="24" cy="24" r="14"/>
+          <path d="M16 24 Q24 16 32 24 Q24 32 16 24"/>
+          <circle cx="20" cy="22" r="1.5" fill="currentColor"/>
+          <circle cx="28" cy="22" r="1.5" fill="currentColor"/>
         </svg>
-        <h3>אינטראקציה ופיזיקה</h3>
-        <p>Raycasting, ניהול עכבר ומגע, סימולציות פיזיקליות עם Cannon.js וחוויות שמגיבות לכל פעולה.</p>
+        <h3>פסיכולוגיה ומנטליות</h3>
+        <p>הצד שאף אחד לא מדבר עליו — פומו, הפסדים, סבלנות וביטחון. מנטליות נכונה היא 80% מהקרב.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">05</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M24 8 L24 40 M8 24 L40 24"/>
-          <circle cx="24" cy="24" r="14"/>
-          <path d="M24 8 Q40 24 24 40 Q8 24 24 8"/>
+          <rect x="6" y="10" width="36" height="28" rx="2"/>
+          <path d="M6 18 L42 18 M14 10 L14 6 M34 10 L34 6"/>
+          <path d="M14 26 L20 26 M22 26 L28 26 M30 26 L36 26 M14 32 L20 32 M22 32 L28 32"/>
         </svg>
-        <h3>תאורה וצללים</h3>
-        <p>תאורה ריאליסטית, צללים דינמיים, environment maps וטריקים מקצועיים שיוצרים אווירה.</p>
+        <h3>יומן מסחר ומעקב</h3>
+        <p>איך בונים יומן מסחר שעובד, מה לרשום בכל עסקה, ואיך הופכים את הנתונים לשיפור אמיתי בביצועים.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">06</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 24 L24 12 L36 24 L24 36 Z"/>
-          <path d="M12 24 L36 24 M24 12 L24 36"/>
-          <circle cx="24" cy="24" r="3"/>
+          <path d="M8 24 L16 24 L20 14 L28 34 L32 24 L40 24"/>
+          <circle cx="8" cy="24" r="2" fill="currentColor"/>
+          <circle cx="40" cy="24" r="2" fill="currentColor"/>
         </svg>
-        <h3>אופטימיזציה לביצועים</h3>
-        <p>איך שומרים על 60fps גם בסצנות מורכבות. LOD, instancing, draw calls — והכל בעברית פשוטה.</p>
+        <h3>ניתוח שוק וסקירה</h3>
+        <p>מעבר על השוק לפני יום מסחר, זיהוי מעגליות ותנועת הכסף, וקביעת נקודות מימוש קריטיות.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">07</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <rect x="8" y="8" width="32" height="32" rx="2"/>
-          <path d="M16 16 L32 16 M16 24 L28 24 M16 32 L24 32"/>
+          <path d="M24 6 L42 18 L42 38 L24 44 L6 38 L6 18 Z"/>
+          <path d="M24 6 L24 24 L42 18 M24 24 L6 18 M24 24 L24 44"/>
         </svg>
-        <h3>UI/UX לחוויות 3D</h3>
-        <p>איך מתכננים ממשק שלא נלחם עם התלת־ממד. עקרונות, דפוסים וטעויות נפוצות שצריך להימנע מהן.</p>
+        <h3>סטאפים והזדמנויות</h3>
+        <p>איך לזהות סטאפ איכותי, מה ההבדל בין הזדמנות לפיתוי, ומתי הכי חכם להישאר מחוץ לשוק.</p>
       </div>
 
       <div class="learn-card">
         <div class="learn-num">08</div>
         <svg class="learn-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M8 24 L24 8 L40 24 L24 40 Z"/>
-          <path d="M14 24 L24 14 L34 24 L24 34 Z"/>
-          <path d="M20 24 L24 20 L28 24 L24 28 Z" fill="currentColor"/>
+          <circle cx="24" cy="24" r="18"/>
+          <path d="M24 6 L24 42 M6 24 L42 24"/>
+          <path d="M11 11 L37 37 M37 11 L11 37" stroke-dasharray="2 2"/>
         </svg>
-        <h3>פריסה לפרודקשן</h3>
-        <p>Vite, Webpack, hosting, דחיסת assets, lazy loading. תקבלו אתר תלת־ממד אמיתי באוויר.</p>
+        <h3>לייב מסחר יומי</h3>
+        <p>27 הקלטות של מסחר אמיתי בזמן אמת — תראו בדיוק איך מתבצעת קבלת החלטות בכל רגע ביום מסחר.</p>
       </div>
     </div>
   </section>
@@ -1741,165 +3306,156 @@
     <div class="section-header reveal">
       <div class="section-eyebrow">תוכן הקורס</div>
       <h2 class="section-title">
-        47 פרקים. <span class="accent">8 מודולים.</span><br>
-        מסע של מאסטרי.
+        159 שיעורים. <span class="accent">14 קטגוריות.</span><br>
+        ידע אמיתי שעובד.
       </h2>
       <p class="section-lead">
-        הקורס בנוי כמסע הדרגתי — כל פרק מתבסס על הקודם, וכולם מובילים לפרויקטים אמיתיים שתוכלו לשים בפורטפוליו.
+        הקורס בנוי כספרייה מקיפה — כל קטגוריה מתמקדת בתחום ספציפי במסחר, וניתנת לצפייה לפי הקצב שלכם, חופשית בכל זמן.
       </p>
     </div>
 
-    <div class="curriculum-list reveal">
-      <div class="module active">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">01</span>
-          <span class="module-title">יסודות Three.js</span>
-          <span class="module-meta">6 פרקים · 8.2 שעות</span>
-          <span class="module-toggle"></span>
-        </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>מבוא — מה זה WebGL ולמה אנחנו צריכים את Three.js</li>
-            <li>הקמת סביבת פיתוח עם Vite</li>
-            <li>הסצנה הראשונה: cube, camera, renderer</li>
-            <li>טרנספורמציות: position, rotation, scale</li>
-            <li>animation loop וזמן אנימציה מדויק</li>
-            <li>Resize, full screen ו־responsive</li>
-          </ul>
-        </div>
-      </div>
+    <div class="categories-grid reveal">
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">02</span>
-          <span class="module-title">גיאומטריות וחומרים</span>
-          <span class="module-meta">7 פרקים · 11.5 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="לייב מסחר יומי">
+        <div class="category-num">01</div>
+        <h3>לייב מסחר יומי</h3>
+        <p>הקלטות לייב של מסחר אמיתי בזמן אמת. תראו בדיוק איך נראה יום מסחר ואיך מתקבלות החלטות.</p>
+        <div class="category-meta">
+          <span class="category-count">27 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>גיאומטריות מובנות: cube, sphere, torus knot</li>
-            <li>גיאומטריות מותאמות אישית עם BufferGeometry</li>
-            <li>חומרים בסיסיים: Basic, Lambert, Phong</li>
-            <li>חומרים מתקדמים: Standard, Physical (PBR)</li>
-            <li>טקסטורות: בסיס, mipmaps, filtering</li>
-            <li>UV mapping והגדרת קואורדינטות</li>
-            <li>טעינת מודלים מ־Blender (GLTF)</li>
-          </ul>
-        </div>
-      </div>
+      </a>
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">03</span>
-          <span class="module-title">תאורה וצללים</span>
-          <span class="module-meta">5 פרקים · 7.8 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="ניתוח שוק וסקירה">
+        <div class="category-num">02</div>
+        <h3>ניתוח שוק וסקירה</h3>
+        <p>מעבר על השוק לפני יום מסחר, זיהוי מעגליות, תנועת הכסף ונקודות מימוש קריטיות.</p>
+        <div class="category-meta">
+          <span class="category-count">20 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>סוגי תאורה: ambient, directional, point, spot</li>
-            <li>הגדרת צללים: shadowMap ואופטימיזציה</li>
-            <li>Environment maps ו־HDRI</li>
-            <li>Baking — צבייה מראש של תאורה</li>
-            <li>טריקים מקצועיים לתאורה דרמטית</li>
-          </ul>
-        </div>
-      </div>
+      </a>
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">04</span>
-          <span class="module-title">אנימציות ואינטראקציה</span>
-          <span class="module-meta">6 פרקים · 9.4 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="ניהול סיכונים">
+        <div class="category-num">03</div>
+        <h3>ניהול סיכונים</h3>
+        <p>סטופ לוס, ניהול עסקאות, יחס סיכון/סיכוי וצמצום הפסדים — הבסיס לכל סוחר רציני.</p>
+        <div class="category-meta">
+          <span class="category-count">18 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>GSAP integration עם Three.js</li>
-            <li>Raycasting — מהי קרן וכיצד לזהות הקלקות</li>
-            <li>OrbitControls וחלופות מתקדמות</li>
-            <li>אנימציות גלילה (scroll-based)</li>
-            <li>תזמון מורכב ו־timeline</li>
-            <li>אינטראקציות מגע למובייל</li>
-          </ul>
-        </div>
-      </div>
+      </a>
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">05</span>
-          <span class="module-title">שייידרים ב־GLSL</span>
-          <span class="module-meta">8 פרקים · 14.6 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="פסיכולוגיה ומנטליות">
+        <div class="category-num">04</div>
+        <h3>פסיכולוגיה ומנטליות</h3>
+        <p>מנטליות נכונה, התמודדות עם פומו, עם הפסדים ועם הצורך לפעול. מה שמפריד בין סוחר טוב למצוין.</p>
+        <div class="category-meta">
+          <span class="category-count">14 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>הבסיס: vertex shader ו־fragment shader</li>
-            <li>uniforms, varyings ו־attributes</li>
-            <li>הראשון שלכם: שייידר צבע מותאם</li>
-            <li>פרלין נויז וטקסטורות פרוצדורליות</li>
-            <li>אפקטים: גלים, אש, מים</li>
-            <li>חלקיקים מתקדמים</li>
-            <li>Post-processing ו־effect composer</li>
-            <li>אופטימיזציה של שייידרים</li>
-          </ul>
-        </div>
-      </div>
+      </a>
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">06</span>
-          <span class="module-title">פיזיקה וסימולציה</span>
-          <span class="module-meta">4 פרקים · 6.8 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="שיעורי יום חמישי">
+        <div class="category-num">05</div>
+        <h3>שיעורי יום חמישי</h3>
+        <p>סקירות שבועיות, שיחות חופשיות, ועדכון על הסטטוס של השוק בסוף כל שבוע.</p>
+        <div class="category-meta">
+          <span class="category-count">11 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>Cannon.js — מבוא לפיזיקה ב־3D</li>
-            <li>גופים נוקשים והתנגשויות</li>
-            <li>חיבור פיזיקה לסצנת Three.js</li>
-            <li>אופטימיזציה של חישובים</li>
-          </ul>
-        </div>
-      </div>
+      </a>
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">07</span>
-          <span class="module-title">אופטימיזציה לפרודקשן</span>
-          <span class="module-meta">5 פרקים · 7.2 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="וויקוף ופאזות">
+        <div class="category-num">06</div>
+        <h3>וויקוף ופאזות</h3>
+        <p>הליבה התיאורטית של הקורס. פאזות הצבירה והחלוקה, פאזה A, B, C, D — כל מה שצריך לדעת על וויקוף.</p>
+        <div class="category-meta">
+          <span class="category-count">10 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>פרופיילינג — איך מודדים ביצועים</li>
-            <li>Draw calls ו־batching</li>
-            <li>Instancing למיליוני אובייקטים</li>
-            <li>LOD — רמות פירוט דינמיות</li>
-            <li>Lazy loading ו־code splitting</li>
-          </ul>
-        </div>
-      </div>
+      </a>
 
-      <div class="module">
-        <div class="module-header" onclick="toggleModule(this)">
-          <span class="module-num">08</span>
-          <span class="module-title">פרויקטים מעשיים</span>
-          <span class="module-meta">6 פרקים · 22.5 שעות</span>
-          <span class="module-toggle"></span>
+      <a href="#lessons" class="category-card open-lessons" data-category="סטאפים והזדמנויות">
+        <div class="category-num">07</div>
+        <h3>סטאפים והזדמנויות</h3>
+        <p>איך לזהות סטאפ איכותי, מה ההבדל בין הזדמנות לפיתוי, ומתי הכי חכם להישאר מחוץ לשוק.</p>
+        <div class="category-meta">
+          <span class="category-count">10 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-        <div class="module-content">
-          <ul class="lesson-list">
-            <li>פרויקט 1: דף נחיתה אינטראקטיבי למוצר</li>
-            <li>פרויקט 2: גלריית עבודות תלת־ממדית</li>
-            <li>פרויקט 3: משחק browser פשוט</li>
-            <li>פריסה ל־Netlify / Vercel</li>
-            <li>SEO לאתרים תלת־ממדיים</li>
-            <li>analytics ומעקב ביצועים</li>
-          </ul>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="יומן מסחר">
+        <div class="category-num">08</div>
+        <h3>יומן מסחר</h3>
+        <p>איך בונים יומן מסחר שעובד, מה לרשום בכל עסקה, ואיך להפוך נתונים לשיפור אמיתי בביצועים.</p>
+        <div class="category-meta">
+          <span class="category-count">9 שיעורים</span>
+          <span class="category-arrow">←</span>
         </div>
-      </div>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="השקעות">
+        <div class="category-num">09</div>
+        <h3>השקעות וניהול תיק</h3>
+        <p>הצד הארוך־טווחי. השקעות, ניהול תיק, חברות נוטסים ואסטרטגיות עבור משקיעים סבלניים.</p>
+        <div class="category-meta">
+          <span class="category-count">7 שיעורים</span>
+          <span class="category-arrow">←</span>
+        </div>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="ווליום">
+        <div class="category-num">10</div>
+        <h3>ניתוח ווליום</h3>
+        <p>הסוד הגדול של המסחר — איך לקרוא ווליום נכון, מתי הוא משמעותי, ואיך לזהות הצטברויות לפני התנועה.</p>
+        <div class="category-meta">
+          <span class="category-count">7 שיעורים</span>
+          <span class="category-arrow">←</span>
+        </div>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="אסטרטגיה ותכנון">
+        <div class="category-num">11</div>
+        <h3>אסטרטגיה ותכנון</h3>
+        <p>בניית תוכנית מסחר נכונה, שילוב אסטרטגיות שונות, ושימוש מדויק בטווחי זמן שונים.</p>
+        <div class="category-meta">
+          <span class="category-count">4 שיעורים</span>
+          <span class="category-arrow">←</span>
+        </div>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="תיאוריה ויסודות">
+        <div class="category-num">12</div>
+        <h3>תיאוריה ויסודות</h3>
+        <p>הבסיס שכל סוחר צריך להכיר — חוקים, סבלנות, סיכון מבני, ומה שעומד מאחורי כל החלטה במסחר.</p>
+        <div class="category-meta">
+          <span class="category-count">4 שיעורים</span>
+          <span class="category-arrow">←</span>
+        </div>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="באק טסטים">
+        <div class="category-num">13</div>
+        <h3>באק טסטים</h3>
+        <p>בדיקה אחורנית של האסטרטגיה — איך עושים זאת נכון, ולמה זה הצעד שלא ניתן לדלג עליו.</p>
+        <div class="category-meta">
+          <span class="category-count">3 שיעורים</span>
+          <span class="category-arrow">←</span>
+        </div>
+      </a>
+
+      <a href="#lessons" class="category-card open-lessons" data-category="שונות">
+        <div class="category-num">14</div>
+        <h3>שונות ושאלות</h3>
+        <p>שאלות ותשובות, דוחות מאקרו, שיעורי TPO ותכנים משולבים שלא נכנסים לקטגוריה אחת.</p>
+        <div class="category-meta">
+          <span class="category-count">14 שיעורים</span>
+          <span class="category-arrow">←</span>
+        </div>
+      </a>
+
     </div>
   </section>
 
@@ -1918,32 +3474,32 @@
         <div class="instructor-frame"></div>
         <div class="instructor-name-tag">
           <strong>אלון רוזן</strong>
-          מפתח 3D · יוצר חוויות
+          סוחר ומורה למסחר
         </div>
       </div>
 
       <div class="instructor-text reveal">
         <div class="section-eyebrow">המרצה</div>
         <h2 class="section-title">
-          12 שנים של<br>
-          <span class="accent">בנייה. שבירה. למידה.</span>
+          שנים של<br>
+          <span class="accent">מסחר. למידה. הוראה.</span>
         </h2>
         <p class="instructor-bio">
-          אלון רוזן הוא מפתח Frontend ו־Creative Developer עצמאי שעבד עם חברות כמו Wix, Monday, ועם סוכנויות בינלאומיות מובילות.
-          האתרים שבנה זכו ב־Awwwards, FWA ו־CSS Design Awards. בקורס הזה הוא לוקח אתכם איתו אחורה — לכל הטעויות, התובנות והקיצורים שהוא היה רוצה שיגידו לו לפני 12 שנים.
+          אלון רוזן הוא סוחר ומורה למסחר לפי שיטת וויקוף, עם ניסיון של שנים בשווקים פיננסיים.
+          בקורס הזה הוא לוקח אתכם איתו אחורה — לכל הטעויות, התובנות והקיצורים שהוא היה רוצה שיגידו לו כשהוא רק התחיל. הוראה ישירה, בעברית פשוטה, על מסחר אמיתי.
         </p>
         <div class="instructor-credentials">
           <div>
-            <div class="credential-num">9</div>
-            <div class="credential-label">פרסי Awwwards</div>
+            <div class="credential-num">159</div>
+            <div class="credential-label">שיעורים מוקלטים</div>
           </div>
           <div>
-            <div class="credential-num">40+</div>
-            <div class="credential-label">פרויקטים מובילים</div>
+            <div class="credential-num">14</div>
+            <div class="credential-label">תחומי לימוד</div>
           </div>
           <div>
-            <div class="credential-num">12</div>
-            <div class="credential-label">שנות ניסיון</div>
+            <div class="credential-num">לייב</div>
+            <div class="credential-label">מסחר יומי</div>
           </div>
         </div>
       </div>
@@ -2170,9 +3726,9 @@
     <div class="footer-brand">
       <div class="logo">
         <span class="logo-mark"></span>
-        מסע התלת־ממד
+        צעד אחרי צעד
       </div>
-      <p>קורס מקיף בעברית לפיתוח חוויות תלת־ממד באינטרנט.</p>
+      <p>קורס מקיף בעברית למסחר בשווקים פיננסיים לפי שיטת וויקוף.</p>
     </div>
     <div class="footer-col">
       <h4>הקורס</h4>
@@ -2202,7 +3758,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <div>© 2026 מסע התלת־ממד. כל הזכויות שמורות.</div>
+    <div>© 2026 צעד אחרי צעד. כל הזכויות שמורות.</div>
     <div>נבנה באהבה בישראל.</div>
   </div>
 </footer>
@@ -2219,6 +3775,35 @@
 <button class="notebook-close" id="notebook-close-btn" type="button" aria-label="חזרה לקורס" title="חזרה לקורס">
   <span class="x-icon">×</span>
 </button>
+
+<!-- === LESSONS OVERLAY === -->
+<div class="lessons-overlay" id="lessons-overlay">
+  <aside class="lessons-sidebar">
+    <div class="lessons-sidebar-header">
+      <div class="lessons-sidebar-title">השיעורים</div>
+      <input type="search" class="lessons-search" id="lessons-search" placeholder="חיפוש שיעור...">
+    </div>
+    <div class="lessons-categories" id="lessons-categories">
+      <!-- categories populated by JS -->
+    </div>
+  </aside>
+
+  <div class="lessons-player">
+    <div class="lessons-player-header">
+      <div class="lessons-player-title-wrap">
+        <div class="lessons-player-eyebrow" id="lessons-current-category">בחרו שיעור</div>
+        <div class="lessons-player-title" id="lessons-current-title">לחצו על שיעור מהרשימה כדי להתחיל</div>
+        <div class="lessons-player-meta" id="lessons-current-meta"></div>
+      </div>
+      <button class="lessons-close" id="lessons-close-btn" type="button" aria-label="סגור" title="חזרה לקורס">×</button>
+    </div>
+    <div class="lessons-video-wrap">
+      <div class="lessons-video-frame" id="lessons-video-frame">
+        <div class="lessons-empty">בחרו שיעור מהרשימה כדי להתחיל לצפות</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -3038,7 +4623,546 @@
       closeNotebook();
     }
   });
+
+  // === Lessons Overlay ===
+  // VIDEOS array is loaded dynamically from videos.json.
+  // To refresh content (after new uploads / Discord changes):
+  //   1. Run `python refresh.py` in the website folder
+  //   2. Commit & push videos.json
+  let VIDEOS = [];
+  let VIDEOS_META = {};  // {generated_at, total_videos, ...}
+
+  const CATEGORY_ORDER = [
+    // Top priority — strategic/educational core (per user request)
+    'תיאוריה ויסודות',         // 1
+    'וויקוף ופאזות',            // 2
+    'ווליום',                   // 3
+    'סטאפים והזדמנויות',        // 4
+    'אסטרטגיה ותכנון',          // 5
+    'יומן מסחר',                // 6
+    'פסיכולוגיה ומנטליות',      // 7
+    // The rest
+    'ניהול סיכונים',
+    'ניתוח שוק וסקירה',
+    'שאלות ותשובות',
+    'שיעורי יום חמישי',
+    'לייב מסחר יומי',
+    'השקעות',
+    'באק טסטים',
+    'שיעור שבועי',
+    'שונות',
+  ];
+
+  const lessonsOverlay = document.getElementById('lessons-overlay');
+  const lessonsCloseBtn = document.getElementById('lessons-close-btn');
+  const lessonsCategoriesEl = document.getElementById('lessons-categories');
+  const lessonsSearchEl = document.getElementById('lessons-search');
+  const lessonsVideoFrame = document.getElementById('lessons-video-frame');
+  const lessonsCurrentTitle = document.getElementById('lessons-current-title');
+  const lessonsCurrentCategory = document.getElementById('lessons-current-category');
+  const lessonsCurrentMeta = document.getElementById('lessons-current-meta');
+
+  let activeCategory = null;
+  let currentVideoId = null;
+
+  function renderLessonsList(filterText = '') {
+    const filter = filterText.trim().toLowerCase();
+    const grouped = {};
+    for (const v of VIDEOS) {
+      if (filter && !v.title.toLowerCase().includes(filter)) continue;
+      if (!grouped[v.category]) grouped[v.category] = [];
+      grouped[v.category].push(v);
+    }
+    const html = CATEGORY_ORDER.filter(c => grouped[c]).map(cat => {
+      const items = grouped[cat];
+      const isActive = (cat === activeCategory) || filter ? 'active' : '';
+      const itemsHtml = items.map(v => {
+        const playing = currentVideoId === v.id ? 'playing' : '';
+        const dateFormatted = v.date.split('-').reverse().join('.');
+        return '<div class="lesson-item ' + playing + '" data-vid="' + v.id + '">' +
+               '<div class="lesson-item-title">' + escapeHtml(v.title) + '</div>' +
+               '<div class="lesson-item-date">' + dateFormatted + '</div></div>';
+      }).join('');
+      return '<div class="lesson-category ' + isActive + '" data-cat="' + escapeHtml(cat) + '">' +
+             '<div class="lesson-category-header">' +
+             '<span class="lesson-category-name">' + escapeHtml(cat) + '</span>' +
+             '<span class="lesson-category-count">' + items.length + '</span>' +
+             '<span class="lesson-category-toggle">←</span>' +
+             '</div><div class="lesson-items">' + itemsHtml + '</div></div>';
+    }).join('');
+    lessonsCategoriesEl.innerHTML = html || '<div class="lessons-empty">לא נמצאו תוצאות</div>';
+
+    lessonsCategoriesEl.querySelectorAll('.lesson-category-header').forEach(h => {
+      h.addEventListener('click', () => {
+        const cat = h.parentElement.getAttribute('data-cat');
+        activeCategory = (activeCategory === cat) ? null : cat;
+        lessonsCategoriesEl.querySelectorAll('.lesson-category').forEach(c => {
+          c.classList.toggle('active', c.getAttribute('data-cat') === activeCategory);
+        });
+      });
+    });
+    lessonsCategoriesEl.querySelectorAll('.lesson-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const vid = parseInt(item.getAttribute('data-vid'));
+        playVideo(vid);
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function playVideo(id) {
+    const v = VIDEOS.find(x => x.id === id);
+    if (!v) return;
+    currentVideoId = id;
+    let embedSrc = '';
+    if (v.platform === 'youtube') {
+      // enablejsapi=1 lets us control volume via postMessage after load
+      embedSrc = 'https://www.youtube.com/embed/' + v.video_id +
+                 '?rel=0&modestbranding=1&enablejsapi=1&origin=' +
+                 encodeURIComponent(location.origin);
+    } else if (v.platform === 'vimeo') {
+      // volume=1.0 forces initial volume to 100% (Vimeo player param)
+      embedSrc = 'https://player.vimeo.com/video/' + v.video_id +
+                 '?title=0&byline=0&portrait=0&volume=1.0';
+    }
+    // Build iframe + ALWAYS-visible "open directly" link below for Vimeo
+    // (Vimeo's domain restrictions show a "Sorry" iframe that doesn't trigger onerror)
+    const directUrl = v.url;
+    const platformName = v.platform === 'youtube' ? 'YouTube' : 'Vimeo';
+    lessonsVideoFrame.innerHTML =
+      '<div style="position:relative;width:100%;height:100%">' +
+        '<iframe src="' + embedSrc + '" ' +
+        'allow="autoplay; fullscreen; picture-in-picture" allowfullscreen ' +
+        'style="width:100%;height:100%;border:0"></iframe>' +
+      '</div>' +
+      // For Vimeo, always show a direct-link button below the iframe
+      (v.platform === 'vimeo'
+        ? '<div style="padding:0.6rem 1rem;background:rgba(0,0,0,0.4);' +
+          'border-top:1px solid rgba(244,241,234,0.1);' +
+          'display:flex;align-items:center;justify-content:space-between;' +
+          'gap:1rem;font-size:0.85rem;color:#a39e95">' +
+          '<span>אם הסרטון לא מתנגן (Vimeo restriction):</span>' +
+          '<a href="' + directUrl + '" target="_blank" rel="noopener" ' +
+          'style="padding:0.4rem 0.9rem;background:#e8a87c;color:#1f2942;' +
+          'text-decoration:none;font-weight:700;border-radius:4px;font-size:0.85rem">' +
+          'פתח ב-' + platformName + ' ↗</a></div>'
+        : '');
+    lessonsCurrentTitle.textContent = v.title;
+    lessonsCurrentCategory.textContent = v.category;
+    const dateFormatted = v.date.split('-').reverse().join('.');
+    lessonsCurrentMeta.textContent = dateFormatted + (v.subcategory ? ' · ' + v.subcategory : '');
+
+    lessonsCategoriesEl.querySelectorAll('.lesson-item').forEach(it => {
+      it.classList.toggle('playing', parseInt(it.getAttribute('data-vid')) === id);
+    });
+
+    // Force player volume to 100% after iframe loads
+    // (YT/Vimeo remember last session volume, which may be low)
+    const iframe = lessonsVideoFrame.querySelector('iframe');
+    if (iframe) {
+      const setMaxVolume = () => {
+        try {
+          if (v.platform === 'youtube') {
+            // YouTube IFrame API postMessage protocol
+            iframe.contentWindow.postMessage(
+              JSON.stringify({event:'command', func:'setVolume', args:[100]}),
+              'https://www.youtube.com');
+            iframe.contentWindow.postMessage(
+              JSON.stringify({event:'command', func:'unMute', args:[]}),
+              'https://www.youtube.com');
+          } else if (v.platform === 'vimeo') {
+            // Vimeo Player.js postMessage protocol
+            iframe.contentWindow.postMessage(
+              JSON.stringify({method:'setVolume', value:1.0}),
+              'https://player.vimeo.com');
+          }
+        } catch (e) { /* ignore cross-origin issues */ }
+      };
+      // Try a few times since iframe load timing varies
+      iframe.addEventListener('load', () => {
+        setTimeout(setMaxVolume, 500);
+        setTimeout(setMaxVolume, 1500);
+        setTimeout(setMaxVolume, 3000);
+      });
+    }
+  }
+
+  function openLessons(e, presetCategory = null) {
+    if (e) e.preventDefault();
+    if (presetCategory) {
+      activeCategory = presetCategory;
+      renderLessonsList();
+    }
+    lessonsOverlay.classList.add('active');
+    document.body.classList.add('lessons-open');
+    document.documentElement.classList.add('lessons-open');
+  }
+
+  function closeLessons() {
+    lessonsOverlay.classList.remove('active');
+    document.body.classList.remove('lessons-open');
+    document.documentElement.classList.remove('lessons-open');
+    if (lessonsVideoFrame.querySelector('iframe')) {
+      lessonsVideoFrame.innerHTML = '<div class="lessons-empty">בחרו שיעור מהרשימה כדי להתחיל לצפות</div>';
+      currentVideoId = null;
+      lessonsCurrentTitle.textContent = 'לחצו על שיעור מהרשימה כדי להתחיל';
+      lessonsCurrentCategory.textContent = 'בחרו שיעור';
+      lessonsCurrentMeta.textContent = '';
+    }
+  }
+
+  // Load videos.json dynamically (with cache-bust based on day)
+  function loadVideos() {
+    const cacheBust = '?v=' + new Date().toISOString().slice(0, 10);
+    fetch('videos.json' + cacheBust)
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(data => {
+        VIDEOS = data.videos || [];
+        VIDEOS_META = {
+          generated_at: data.generated_at,
+          total: data.total_videos,
+          channel: data.channel_name,
+        };
+        renderLessonsList();
+        console.log('Loaded ' + VIDEOS.length + ' videos. Last updated: ' +
+                    (data.generated_at || 'unknown'));
+      })
+      .catch(err => {
+        console.error('Failed to load videos.json:', err);
+        lessonsCategoriesEl.innerHTML =
+          '<div class="lessons-empty" style="color:#e8a87c">' +
+          'שגיאה בטעינת רשימת השיעורים.<br>' +
+          'נסה לרענן את הדף או פנה למנהל האתר.<br>' +
+          '<small style="opacity:0.7">' + err.message + '</small></div>';
+      });
+  }
+  loadVideos();
+
+  document.querySelectorAll('.open-lessons').forEach(el => {
+    el.addEventListener('click', (e) => {
+      const cat = el.getAttribute('data-category');
+      openLessons(e, cat);
+    });
+  });
+
+  lessonsCloseBtn.addEventListener('click', closeLessons);
+
+  lessonsSearchEl.addEventListener('input', (e) => {
+    renderLessonsList(e.target.value);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && lessonsOverlay.classList.contains('active')) {
+      closeLessons();
+    }
+  });
+
 </script>
+
+
+  <!-- Refresh lives button (bottom-left, with hover tooltip) -->
+  <button id="refresh-lives-btn" class="refresh-lives-btn"
+          aria-label="רענון לייבים חדשים מ-Discord">
+    רענן לייבים חדשים
+    <span class="refresh-lives-tooltip">
+      לפני לחיצה <strong>תוודא שהדיסקורט מופעל</strong>
+    </span>
+  </button>
+
+  <!-- Refresh modal -->
+  <div id="refresh-modal" class="refresh-modal">
+    <div class="refresh-modal-inner">
+      <button class="refresh-modal-close" id="refresh-modal-close">✕</button>
+      <h2>רענון לייבים חדשים</h2>
+      <div class="subtitle">
+        תהליך 3-שלבי לאיסוף לייבים חדשים מ-Discord ועדכון האתר.
+      </div>
+
+      <div class="refresh-step">
+        <div class="refresh-step-title">
+          <span class="refresh-step-num">1.</span>
+          פתח את ערוץ הלייבים ב-Discord
+        </div>
+        <div class="refresh-step-body">
+          ודא שאתה מחובר ל-Discord. הסקריפט יזהה את ערוץ "#הקלטות-לייבים📹" אוטומטית.
+        </div>
+        <a href="https://discord.com/channels/1004035467810971779/1391734106840236053"
+           target="_blank" rel="noopener" class="refresh-step-btn">
+          פתח את הערוץ ↗
+        </a>
+      </div>
+
+      <div class="refresh-step">
+        <div class="refresh-step-title">
+          <span class="refresh-step-num">2.</span>
+          הרץ את הסקריפט ב-Discord
+        </div>
+        <div class="refresh-step-body">
+          לאחר שהערוץ נטען (5-10 שניות):<br>
+          (א) פתח את הקונסול של הדפדפן ב-Discord — <kbd>F12</kbd> ואז כרטיסיית <strong>Console</strong>.<br>
+          (ב) לחץ על הכפתור כדי להעתיק את הסקריפט, הדבק בקונסול ולחץ Enter.<br>
+          (ג) חכה לסיום. הסקריפט יפתח חלון דיאלוג ויוריד קובץ JSON.
+        </div>
+        <button id="refresh-copy-btn" class="refresh-step-btn">
+          העתק סקריפט סריקה ⎘
+        </button>
+      </div>
+
+      <div class="refresh-step">
+        <div class="refresh-step-title">
+          <span class="refresh-step-num">3.</span>
+          טען את הקובץ שירד
+        </div>
+        <div class="refresh-step-body">
+          העלה את הקובץ <code>discord_lives_*.json</code> שירד לתיקיית Downloads.
+          האתר ימזג את הסרטונים החדשים עם הקיימים ויציג אותם מיידית.
+        </div>
+        <input type="file" id="refresh-file-input" class="refresh-file-input"
+               accept="application/json,.json">
+      </div>
+
+      <div id="refresh-status" class="refresh-status"></div>
+    </div>
+  </div>
+
+  <script>
+    // Scraper script — to copy to clipboard
+    const REFRESH_SCRAPER = `/* Discord scraper — to be pasted into Discord console after Discord channel loads.
+ * Outputs a JSON file with new videos found.
+ */
+(async function() {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const sc = document.querySelector('div.scroller__36d07[class*="customTheme"]') ||
+             document.querySelector('[class*="scroller"][class*="customTheme"]');
+  if (!sc) { alert('לא נמצא ערוץ דיסקורד. ודא שאתה בערוץ הלייבים.'); return; }
+
+  const messages = {};
+
+  function capture() {
+    const items = document.querySelectorAll('li[id^="chat-messages-"]');
+    for (const li of items) {
+      const id = li.id;
+      if (messages[id]) continue;
+      const timestamp = li.querySelector('time')?.getAttribute('datetime') || null;
+      const links = Array.from(li.querySelectorAll('a[href]')).map(a => a.href);
+      const embeds = Array.from(li.querySelectorAll('[class*="embedWrapper"], article[class*="embed"]')).map(e => ({
+        title: e.querySelector('[class*="embedTitle"]')?.textContent || null,
+        url: e.querySelector('a[class*="embedTitleLink"]')?.href || e.querySelector('a[href]')?.href || null,
+      }));
+      messages[id] = { id, timestamp, links, embeds };
+    }
+  }
+
+  // Scroll up to load latest 50-60 messages
+  capture();
+  for (let i = 0; i < 12; i++) {
+    sc.scrollTop = Math.max(0, sc.scrollTop - 800);
+    sc.dispatchEvent(new Event('scroll', { bubbles: true }));
+    await sleep(700);
+    capture();
+  }
+
+  // Extract videos
+  const videos = [];
+  for (const m of Object.values(messages)) {
+    if (!m.timestamp) continue;
+    const sources = new Set();
+    for (const l of m.links) {
+      const yt = l.match(/(?:youtu\\.be\\/|youtube\\.com\\/(?:watch\\?v=|embed\\/|v\\/))([A-Za-z0-9_-]+)/);
+      if (yt) sources.add('yt:' + yt[1]);
+      const vm = l.match(/vimeo\\.com\\/(?:video\\/)?(\\d+)/);
+      if (vm) sources.add('vimeo:' + vm[1]);
+    }
+    for (const e of m.embeds) {
+      if (e.url) {
+        const yt = e.url.match(/(?:youtu\\.be\\/|youtube\\.com\\/(?:watch\\?v=|embed\\/|v\\/))([A-Za-z0-9_-]+)/);
+        if (yt) sources.add('yt:' + yt[1]);
+        const vm = e.url.match(/vimeo\\.com\\/(?:video\\/)?(\\d+)/);
+        if (vm) sources.add('vimeo:' + vm[1]);
+      }
+    }
+    for (const s of sources) {
+      videos.push({
+        d: m.timestamp.substring(0, 10),
+        s,
+        ttl: (m.embeds[0]?.title || '').replace(/\\s+/g, ' ').substring(0, 200),
+      });
+    }
+  }
+
+  // Dedupe
+  const seen = new Set();
+  const unique = videos.filter(v => seen.has(v.s) ? false : (seen.add(v.s), true));
+  unique.sort((a, b) => a.d.localeCompare(b.d));
+
+  // Download as JSON file
+  const blob = new Blob([JSON.stringify(unique, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'discord_lives_' + Date.now() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  console.log(\`%c✓ נמצאו \${unique.length} סרטונים. הקובץ נשמר ב-Downloads.\`,
+              'background:#26A69A;color:#fff;padding:4px 8px;font-size:14px');
+  alert(\`נמצאו \${unique.length} סרטונים. הקובץ ירד.\\nחזור לאתר וטען את הקובץ.\`);
+})();
+`;
+
+    const refreshBtn = document.getElementById('refresh-lives-btn');
+    const refreshModal = document.getElementById('refresh-modal');
+    const refreshClose = document.getElementById('refresh-modal-close');
+    const refreshCopy = document.getElementById('refresh-copy-btn');
+    const refreshFile = document.getElementById('refresh-file-input');
+    const refreshStatus = document.getElementById('refresh-status');
+
+    refreshBtn.addEventListener('click', () => {
+      refreshModal.classList.add('active');
+      refreshStatus.classList.remove('show', 'success', 'error');
+    });
+    refreshClose.addEventListener('click', () => {
+      refreshModal.classList.remove('active');
+    });
+    refreshModal.addEventListener('click', (e) => {
+      if (e.target === refreshModal) refreshModal.classList.remove('active');
+    });
+
+    refreshCopy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(REFRESH_SCRAPER);
+        refreshCopy.textContent = '✓ הועתק! עבור ל-Discord והדבק';
+        refreshCopy.classList.add('copied');
+        setTimeout(() => {
+          refreshCopy.textContent = 'העתק סקריפט סריקה ⎘';
+          refreshCopy.classList.remove('copied');
+        }, 4000);
+      } catch (err) {
+        // Fallback: select via textarea
+        const ta = document.createElement('textarea');
+        ta.value = REFRESH_SCRAPER;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        refreshCopy.textContent = '✓ הועתק!';
+        refreshCopy.classList.add('copied');
+      }
+    });
+
+    refreshFile.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const newVideos = JSON.parse(text);
+        if (!Array.isArray(newVideos)) throw new Error('הקובץ אינו מערך');
+
+        // Merge with existing VIDEOS array
+        const existingIds = new Set(VIDEOS.map(v => v.platform + ':' + v.video_id));
+        let added = 0;
+        let maxId = Math.max(...VIDEOS.map(v => v.id), 0);
+
+        for (const nv of newVideos) {
+          if (!nv.s) continue;
+          const [platform, vid] = nv.s.split(':', 2);
+          const key = platform + ':' + vid;
+          if (existingIds.has(key)) continue;
+
+          // Auto-categorize (simplified)
+          const ttl = nv.ttl || '';
+          let cat = 'שונות', sub = 'תוכן כללי';
+          if (/וויקוף|פאזה|שלב הראשון|שלב השני/i.test(ttl)) { cat = 'וויקוף ופאזות'; sub = 'וויקוף - כללי'; }
+          else if (/ווליום|וליום/i.test(ttl)) { cat = 'ווליום'; sub = 'ניתוח ווליום'; }
+          else if (/סטופ ?לוס/i.test(ttl)) { cat = 'ניהול סיכונים'; sub = 'סטופ לוס'; }
+          else if (/סטאפ|setup/i.test(ttl)) { cat = 'סטאפים והזדמנויות'; sub = 'זיהוי סטאפים'; }
+          else if (/יומן/i.test(ttl)) { cat = 'יומן מסחר'; sub = 'בניית/כתיבת יומן'; }
+          else if (/מנטליות|פומו|תודעה/i.test(ttl)) { cat = 'פסיכולוגיה ומנטליות'; sub = 'מנטליות וגישה'; }
+          else if (/יום חמישי/i.test(ttl)) { cat = 'שיעורי יום חמישי'; sub = 'סקירה / שיחות חופשיות'; }
+          else if (/השקעות|תיק השקע/i.test(ttl)) { cat = 'השקעות'; sub = 'השקעות וניהול תיק'; }
+          else if (/באק[ ]?טסט|backtest/i.test(ttl)) { cat = 'באק טסטים'; sub = 'באק טסטים'; }
+          else if (/אסטרטגי|טווח/i.test(ttl)) { cat = 'אסטרטגיה ותכנון'; sub = 'אסטרטגיה ותכנית מסחר'; }
+          else if (/תאוריה|תיאוריה|מה זה מסחר/i.test(ttl)) { cat = 'תיאוריה ויסודות'; sub = 'תיאוריה'; }
+          else if (/שאלות[ ]?תשובות/i.test(ttl)) { cat = 'שאלות ותשובות'; sub = 'שאלות ותשובות'; }
+          else if (/לייב/i.test(ttl)) { cat = 'לייב מסחר יומי'; sub = 'הקלטת לייב יומי'; }
+
+          maxId++;
+          VIDEOS.push({
+            id: maxId,
+            category: cat,
+            subcategory: sub,
+            title: ttl,
+            date: nv.d,
+            platform,
+            video_id: vid,
+            url: platform === 'youtube' ? 'https://youtu.be/' + vid : 'https://vimeo.com/' + vid,
+          });
+          existingIds.add(key);
+          added++;
+        }
+
+        // Save merged list to localStorage so it persists across page loads
+        localStorage.setItem('videos_extra', JSON.stringify(VIDEOS));
+
+        // Re-render
+        renderLessonsList();
+
+        refreshStatus.classList.remove('error');
+        refreshStatus.classList.add('show', 'success');
+        if (added === 0) {
+          refreshStatus.textContent = 'הקובץ נטען — אין סרטונים חדשים שלא היו כבר ברשימה.';
+        } else {
+          refreshStatus.innerHTML = `✓ נוספו <strong>${added}</strong> סרטונים חדשים. ` +
+            `סה"כ ${VIDEOS.length} שיעורים ברשימה כעת.`;
+        }
+      } catch (err) {
+        refreshStatus.classList.remove('success');
+        refreshStatus.classList.add('show', 'error');
+        refreshStatus.textContent = 'שגיאה בטעינת הקובץ: ' + err.message;
+      }
+    });
+
+    // Load any extra videos from localStorage on init
+    (function loadExtraFromStorage() {
+      try {
+        const extra = localStorage.getItem('videos_extra');
+        if (!extra) return;
+        // Wait for VIDEOS to be loaded first, then merge
+        const checkAndMerge = setInterval(() => {
+          if (typeof VIDEOS !== 'undefined' && VIDEOS.length > 0) {
+            clearInterval(checkAndMerge);
+            const stored = JSON.parse(extra);
+            const existingIds = new Set(VIDEOS.map(v => v.platform + ':' + v.video_id));
+            let merged = 0;
+            for (const v of stored) {
+              const key = v.platform + ':' + v.video_id;
+              if (!existingIds.has(key)) {
+                VIDEOS.push(v);
+                existingIds.add(key);
+                merged++;
+              }
+            }
+            if (merged > 0) {
+              renderLessonsList();
+              console.log('Merged ' + merged + ' videos from localStorage');
+            }
+          }
+        }, 300);
+        setTimeout(() => clearInterval(checkAndMerge), 10000);
+      } catch (e) {
+        console.warn('Failed to load extra videos from storage:', e);
+      }
+    })();
+  </script>
 
 </body>
 </html>
