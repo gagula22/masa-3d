@@ -1,0 +1,50 @@
+// =============================================================
+// Firestore Security Rules — masa-3d (Wyckoff course site)
+// =============================================================
+// Deploy: Firebase Console → Firestore Database → Rules → Publish
+// One-time setup. No maintenance needed afterwards.
+// =============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: is the requester the site owner?
+    function isOwner() {
+      return request.auth != null
+          && request.auth.token.email == 'gagula22@gmail.com'
+          && request.auth.token.email_verified == true;
+    }
+
+    // Helper: is the requester signed in with a verified email?
+    function isVerified() {
+      return request.auth != null
+          && request.auth.token.email_verified == true;
+    }
+
+    // ----- course_users -----
+    // Owner manages everything; users can read only their own doc
+    match /course_users/{docId} {
+      allow read: if isOwner()
+                  || (isVerified() && request.auth.token.email == resource.data.email);
+      allow create, update, delete: if isOwner();
+    }
+
+    // ----- blocklist -----
+    // Owner only — controls who is blocked from signing in
+    match /blocklist/{email} {
+      allow read, write: if isOwner();
+    }
+
+    // ----- allowlist (if used) -----
+    // Owner only
+    match /allowlist/{email} {
+      allow read, write: if isOwner();
+    }
+
+    // ----- DENY everything else by default -----
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
