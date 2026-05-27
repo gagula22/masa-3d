@@ -2832,7 +2832,16 @@
           '</div>' +
           '<a class="auth-signout-link" id="denied-signout">התנתק ונסה חשבון אחר ↗</a>';
         const so = document.getElementById('denied-signout');
-        if (so) so.addEventListener('click', () => auth.signOut());
+        if (so) so.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            await auth.signOut();
+          } catch (err) {
+            console.warn('Sign out error:', err);
+          }
+          // Force reload regardless to reset the UI state
+          window.location.reload();
+        });
       }
 
       // ---------- "Create user" modal logic (admin only) ----------
