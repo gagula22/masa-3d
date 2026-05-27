@@ -2219,6 +2219,32 @@
       padding: 2.5rem 2rem;
       text-align: center;
       box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .auth-close-btn {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 36px;
+      height: 36px;
+      background: rgba(31, 41, 66, 0.85);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      font-size: 1.3rem;
+      font-weight: 300;
+      line-height: 1;
+      transition: all 0.25s;
+      padding: 0;
+    }
+    .auth-close-btn:hover {
+      background: var(--accent);
+      color: var(--bg-card);
+      transform: scale(1.08);
     }
     .auth-logo {
       width: 56px;
@@ -2348,6 +2374,7 @@
        ============================================ -->
   <div id="auth-overlay">
     <div class="auth-card">
+      <button id="auth-close-btn" class="auth-close-btn" type="button" aria-label="סגור" title="סגור">×</button>
       <div class="auth-logo"></div>
       <h1 class="auth-title">קורס מסחר וויקוף</h1>
       <p class="auth-subtitle">גישה למורשים בלבד.<br>התחבר באמצעות חשבון Google שלך.</p>
@@ -2496,10 +2523,32 @@
       const overlay = document.getElementById('auth-overlay');
       const googleBtn = document.getElementById('auth-google-btn');
       const status = document.getElementById('auth-status');
+      const closeBtn = document.getElementById('auth-close-btn');
       const auth = firebase.auth();
 
       // Use LOCAL persistence so user stays logged in across browser sessions
       auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+
+      // Close button — allows user to dismiss login modal and browse landing page
+      // Locked content (lessons, notebook) will require login again
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          overlay.classList.remove('visible');
+          overlay.classList.add('hidden');
+        });
+      }
+
+      // All "open-auth" buttons (registration / start learning / join now) open the auth modal
+      document.querySelectorAll('.open-auth').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          // Only open if user is not already logged in
+          if (!firebase.auth().currentUser) {
+            overlay.classList.add('visible');
+            overlay.classList.remove('hidden');
+          }
+        });
+      });
 
       // Lazy-fetch nav-cta (DOM not parsed when this script runs)
       const ORIGINAL_CTA_TEXT = 'להרשמה';
@@ -2517,10 +2566,14 @@
         const navCta = document.querySelector('.nav-cta');
         if (!navCta) return;
         navCta.textContent = ORIGINAL_CTA_TEXT;
-        navCta.setAttribute('href', ORIGINAL_CTA_HREF);
-        navCta.title = '';
+        navCta.setAttribute('href', '#');
+        navCta.title = 'התחבר לקורס';
         navCta.classList.remove('is-signout');
-        navCta.onclick = null;
+        navCta.onclick = (e) => {
+          e.preventDefault();
+          overlay.classList.add('visible');
+          overlay.classList.remove('hidden');
+        };
       }
 
       // Admin-only: "+ הוסף משתמש" button — injected into the nav after DOM ready
@@ -3167,7 +3220,7 @@
       קורס מסחר מקיף בעברית — מהיסודות ועד מסחר לייב יומי. ניהול סיכונים, פסיכולוגיה, ניתוח שוק ומעקב אחרי הכסף.
     </p>
     <div class="hero-cta-group">
-      <a href="#pricing" class="btn-primary">
+      <a href="#" class="btn-primary open-auth">
         <span>התחילו ללמוד ←</span>
       </a>
       <a href="#" class="btn-secondary">
@@ -3593,7 +3646,7 @@
           <li><span class="check">✓</span> גישה לכל החיים</li>
           <li><span class="check">✓</span> עדכוני תוכן חינם</li>
         </ul>
-        <a href="#" class="pricing-cta">הצטרפו עכשיו</a>
+        <a href="#" class="pricing-cta open-auth">הצטרפו עכשיו</a>
       </div>
 
       <div class="pricing-card featured">
@@ -3613,7 +3666,7 @@
           <li><span class="check">✓</span> תעודת סיום מקצועית</li>
           <li><span class="check">✓</span> סדנאות חיות חודשיות</li>
         </ul>
-        <a href="#" class="pricing-cta">קבלו גישה פרימיום</a>
+        <a href="#" class="pricing-cta open-auth">קבלו גישה פרימיום</a>
       </div>
     </div>
   </section>
@@ -3713,7 +3766,7 @@
       <p>
         הצטרפו ל־12,000 תלמידים שכבר בונים את העתיד של ה־web.
       </p>
-      <a href="#pricing" class="btn-primary" style="font-size: 1.1rem; padding: 1.3rem 2.8rem;">
+      <a href="#" class="btn-primary open-auth" style="font-size: 1.1rem; padding: 1.3rem 2.8rem;">
         <span>התחילו עכשיו ←</span>
       </a>
     </div>
@@ -4613,7 +4666,19 @@
   document.querySelectorAll('.open-notebook').forEach(el => {
     el.addEventListener('mouseenter', preloadNotebook, { once: true });
     el.addEventListener('focus', preloadNotebook, { once: true });
-    el.addEventListener('click', openNotebook);
+    el.addEventListener('click', (e) => {
+      // Check if user is authenticated
+      if (typeof firebase !== 'undefined' && firebase.auth && !firebase.auth().currentUser) {
+        e.preventDefault();
+        const overlay = document.getElementById('auth-overlay');
+        if (overlay) {
+          overlay.classList.add('visible');
+          overlay.classList.remove('hidden');
+        }
+        return;
+      }
+      openNotebook(e);
+    });
   });
 
   notebookCloseBtn.addEventListener('click', closeNotebook);
@@ -4848,6 +4913,16 @@
 
   document.querySelectorAll('.open-lessons').forEach(el => {
     el.addEventListener('click', (e) => {
+      // Check if user is authenticated
+      if (typeof firebase !== 'undefined' && firebase.auth && !firebase.auth().currentUser) {
+        e.preventDefault();
+        const overlay = document.getElementById('auth-overlay');
+        if (overlay) {
+          overlay.classList.add('visible');
+          overlay.classList.remove('hidden');
+        }
+        return;
+      }
       const cat = el.getAttribute('data-category');
       openLessons(e, cat);
     });
