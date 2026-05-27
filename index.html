@@ -4697,7 +4697,12 @@
           alert('המחברת היא אישית של המרצה ואינה חלק מהקורס.');
           return;
         }
+        // Admin logged in — open notebook in a new tab instead of iframe overlay
+        e.preventDefault();
+        window.open(NOTEBOOK_URL, '_blank', 'noopener,noreferrer');
+        return;
       }
+      // Fallback (no Firebase) — original iframe behavior
       openNotebook(e);
     });
   });
