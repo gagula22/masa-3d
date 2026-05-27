@@ -4668,18 +4668,49 @@
     el.addEventListener('focus', preloadNotebook, { once: true });
     el.addEventListener('click', (e) => {
       // Check if user is authenticated
-      if (typeof firebase !== 'undefined' && firebase.auth && !firebase.auth().currentUser) {
-        e.preventDefault();
-        const overlay = document.getElementById('auth-overlay');
-        if (overlay) {
-          overlay.classList.add('visible');
-          overlay.classList.remove('hidden');
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        const user = firebase.auth().currentUser;
+        // Not logged in — open auth overlay
+        if (!user) {
+          e.preventDefault();
+          const overlay = document.getElementById('auth-overlay');
+          if (overlay) {
+            overlay.classList.add('visible');
+            overlay.classList.remove('hidden');
+          }
+          return;
         }
-        return;
+        // Logged in but NOT admin — block access (notebook is personal to admin only)
+        const ADMIN_EMAIL_LOCAL = 'gagula22@gmail.com';
+        if ((user.email || '').toLowerCase() !== ADMIN_EMAIL_LOCAL.toLowerCase()) {
+          e.preventDefault();
+          alert('המחברת היא אישית של המרצה ואינה חלק מהקורס.');
+          return;
+        }
       }
       openNotebook(e);
     });
   });
+
+  // Hide "מחברת שלי" link from non-admin users
+  function updateNotebookVisibility() {
+    if (typeof firebase === 'undefined' || !firebase.auth) return;
+    const user = firebase.auth().currentUser;
+    const ADMIN_EMAIL_LOCAL = 'gagula22@gmail.com';
+    const isAdmin = user && (user.email || '').toLowerCase() === ADMIN_EMAIL_LOCAL.toLowerCase();
+    document.querySelectorAll('.open-notebook').forEach(el => {
+      // Find the parent <li> for nav items, otherwise hide the element itself
+      const parent = el.closest('li') || el;
+      parent.style.display = isAdmin ? '' : 'none';
+    });
+  }
+
+  // Run on auth state change
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged(updateNotebookVisibility);
+  }
+  // Also run on page load (in case auth already fired)
+  document.addEventListener('DOMContentLoaded', updateNotebookVisibility);
 
   notebookCloseBtn.addEventListener('click', closeNotebook);
 
